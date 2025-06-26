@@ -1,23 +1,23 @@
-import { OrbitControls } from "@react-three/drei";
-import { Canvas } from "@react-three/fiber";
-import Board from "./components/board";
-import Model from "./components/model";
-import Dice from "./components/dice";
+import {
+	createBrowserRouter,
+	createRoutesFromElements,
+	Route,
+	RouterProvider,
+} from "react-router-dom";
+import Home from "./pages/Home";
+import OpenScreen from "./components/openScreen";
 
-// import * as THREE from "three";
+const router = createBrowserRouter(
+	createRoutesFromElements(
+		<Route>
+			<Route path="/" element={<OpenScreen />} />
+			<Route path="/play" element={<Home />} />
+			<Route path="/contact" element={<div>Contact Page</div>} />
+			<Route path="*" element={<div>404 Not Found</div>} />
+		</Route>
+	)
+);
 
-function App() {
-	return (
-		<>
-			<Canvas camera={{ position: [0, 3, 12], fov: 50 }}>
-				<OrbitControls maxPolarAngle={Math.PI / 3} enableZoom={false} />
-				<ambientLight />
-				<Dice />
-				<Model />
-				<Board />
-			</Canvas>
-		</>
-	);
+export default function App() {
+	return <RouterProvider router={router} />;
 }
-
-export default App;
