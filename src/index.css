@@ -24,6 +24,7 @@ body {
 	padding: 0;
 	font-family: "DM Sans", sans-serif;
 	font-size: 16px;
+	background-color: oklch(80.9% 0.105 251.813);
 }
 
 canvas {

@@ -124,21 +124,23 @@ const OpenScreen = () => {
 					<p className="font-fraunces italic text-4xl text-orange-200 text-center">
 						Welcome!
 					</p>
-					<p className="w-11/12 mx-auto">
-						Long ago, in a corner of the internet stitched together by code,
-						color, and curiosity… a magical board appeared. <br /> They called
-						it{" "}
+					<p className="w-11/12 mx-auto text-center md:text-start">
+						Somewhere high above the noise of the internet, where clouds drift
+						like thoughts and the code hums softly in the air… A magical board
+						floats, suspended in the sky, waiting for you.. <br />
 						<span className="font-fraunces text-accent italic text-lg">
 							Ufylandia
 						</span>{" "}
 						— a soft, sparkling world handcrafted by a wandering software
 						engineer named{" "}
 						<span className="font-fraunces text-accent italic text-lg">
-							Ufuoma
-						</span>
-						.
+							Ufuoma.
+						</span>{" "}
+						<br />
+						She built it from pastel dreams, late-night bugs, and love for the
+						little things.
 					</p>
-					<p className="w-11/12 mx-auto">
+					<p className="w-11/12 mx-auto text-center md:text-start">
 						Whether you’re a recruiter seeking talent, a fellow developer
 						looking for kindred code, or just a curious wanderer…
 					</p>
@@ -211,8 +213,8 @@ const OpenScreen = () => {
 			)} */}
 			<div
 				ref={continuousRef}
-				className="w-screen h-fit absolute top-0 left-0 z-[100]">
-				{images.splice(0, 3).map((src, index) => {
+				className="w-screen h-fit absolute top-0 left-0 z-[100] ">
+				{images.splice(0, 1).map((src, index) => {
 					return (
 						<img
 							key={index}
@@ -220,9 +222,9 @@ const OpenScreen = () => {
 							alt={`Cloud ${index + 1}`}
 							className="absolute w-[100%] md:w-[50%] cloud-img continuous-cloud"
 							style={{
-								top: `0.5%`,
-								left: `${20 + index * 10}%`,
-								transform: "translateX(-50%)",
+								top: `0.2%`,
+								left: `0%`,
+								// transform: "translateX(-50%)",
 							}}
 						/>
 					);

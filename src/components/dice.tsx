@@ -1,9 +1,14 @@
 import { useTexture } from "@react-three/drei";
-import { useRef, useState } from "react";
+import { useContext, useRef, useState, useEffect } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
+import { GameContext } from "@/context/gameContext";
 
 const Dice = () => {
+	const gameContext = useContext(GameContext);
+
+	const setDiceFace = gameContext?.setDiceFace;
+
 	const textures = useTexture([
 		"/textures/IMG_3001.PNG", // left face (1)
 		"/textures/IMG_3006.PNG", // right face (6)
@@ -20,6 +25,33 @@ const Dice = () => {
 	const [landingPos, setLandingPos] = useState<THREE.Vector3>(
 		() => new THREE.Vector3()
 	);
+
+	const lastShakeTime = useRef(0);
+	const SHAKE_THRESHOLD = 15;
+
+	useEffect(() => {
+		function handleMotion(event: DeviceMotionEvent) {
+			const acc = event.accelerationIncludingGravity;
+			if (!acc) return;
+			const {
+				x = 0,
+				y = 0,
+				z = 0,
+			} = acc as { x: number | null; y: number | null; z: number | null };
+			const magnitude = Math.sqrt(
+				(x ?? 0) * (x ?? 0) + (y ?? 0) * (y ?? 0) + (z ?? 0) * (z ?? 0)
+			);
+			const now = Date.now();
+			if (magnitude > SHAKE_THRESHOLD && now - lastShakeTime.current > 1000) {
+				lastShakeTime.current = now;
+				handleRotation();
+			}
+		}
+		window.addEventListener("devicemotion", handleMotion);
+		return () => {
+			window.removeEventListener("devicemotion", handleMotion);
+		};
+	}, []);
 
 	const handleRotation = () => {
 		setIsRotating(true);
@@ -69,7 +101,10 @@ const Dice = () => {
 				ref.current.position.set(landingPos.x, 0.5, landingPos.z);
 
 				const diceNumber = [6, 1, 4, 3, 5, 2];
-				console.log(`Face on top: ${diceNumber[targetFace]}`);
+
+				if (setDiceFace) {
+					setDiceFace(diceNumber[targetFace]);
+				}
 			}
 			return next;
 		});
