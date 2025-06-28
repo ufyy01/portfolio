@@ -37,18 +37,44 @@ const Dice = () => {
 				x = 0,
 				y = 0,
 				z = 0,
-			} = acc as { x: number | null; y: number | null; z: number | null };
-			const magnitude = Math.sqrt(
-				(x ?? 0) * (x ?? 0) + (y ?? 0) * (y ?? 0) + (z ?? 0) * (z ?? 0)
-			);
+			} = acc as { x: number; y: number; z: number };
+			const magnitude = Math.sqrt(x * x + y * y + z * z);
 			const now = Date.now();
 			if (magnitude > SHAKE_THRESHOLD && now - lastShakeTime.current > 1000) {
 				lastShakeTime.current = now;
 				handleRotation();
 			}
 		}
-		window.addEventListener("devicemotion", handleMotion);
+		let permissionListener: () => void;
+		// On iOS, need user permission for devicemotion
+		if (
+			typeof DeviceMotionEvent !== "undefined" &&
+			"requestPermission" in DeviceMotionEvent
+		) {
+			permissionListener = () => {
+				// Type assertion to allow calling requestPermission
+				(
+					DeviceMotionEvent as typeof DeviceMotionEvent & {
+						requestPermission?: () => Promise<string>;
+					}
+				).requestPermission!()
+					.then((state: string) => {
+						if (state === "granted") {
+							window.addEventListener("devicemotion", handleMotion);
+						}
+					})
+					.catch(console.error);
+			};
+			// wait for first user interaction to request permission
+			window.addEventListener("touchstart", permissionListener, { once: true });
+		} else {
+			// other platforms can listen immediately
+			window.addEventListener("devicemotion", handleMotion);
+		}
 		return () => {
+			if (permissionListener) {
+				window.removeEventListener("touchstart", permissionListener);
+			}
 			window.removeEventListener("devicemotion", handleMotion);
 		};
 	}, []);
