@@ -306,7 +306,10 @@ const Model = () => {
 					duration: 1.5,
 					ease: "power2.inOut",
 					onUpdate: () => {
-						if (meshRef.current) camera.lookAt(meshRef.current.position);
+						if (meshRef.current) {
+							const modelPos = meshRef.current.position.clone();
+							camera.lookAt(modelPos.x, modelPos.y + 0.5, modelPos.z);
+						}
 						camera.updateProjectionMatrix();
 					},
 				});

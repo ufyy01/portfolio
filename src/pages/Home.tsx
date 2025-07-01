@@ -83,8 +83,8 @@ function Home() {
 					</Float>
 				</Canvas>
 			)}
-			{playing && showCloudPopup && <CloudPopup />}
 			{playing && <MultipleClouds />}
+			{playing && showCloudPopup && <CloudPopup />}
 		</>
 	);
 }
