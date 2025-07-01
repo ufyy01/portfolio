@@ -1,6 +1,9 @@
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
+// Preload the board texture
+useTexture.preload("/textures/board.png");
+
 const Board = () => {
 	const boardTexture = useTexture("/textures/board.png");
 
@@ -19,7 +22,7 @@ const Board = () => {
 	];
 
 	return (
-		<mesh receiveShadow>
+		<mesh>
 			<boxGeometry args={[9, 0.2, 9]} />
 			{materials.map((material, index) => (
 				<meshStandardMaterial
