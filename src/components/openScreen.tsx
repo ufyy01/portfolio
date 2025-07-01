@@ -1,8 +1,6 @@
 import { useContext, useLayoutEffect, useRef, useState } from "react";
 // Extend DeviceMotionEvent to include requestPermission for iOS Safari support
-interface DeviceMotionEventWithPermission extends DeviceMotionEvent {
-	requestPermission?: () => Promise<"granted" | "denied">;
-}
+
 import gsap from "gsap";
 import { Button } from "./ui/button";
 import { Icon } from "@iconify/react";
@@ -121,29 +119,6 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 		}
 	}, [images.length]);
 
-	const handleGesturePermission = () => {
-		const DeviceMotionEventWithPerm =
-			DeviceMotionEvent as unknown as DeviceMotionEventWithPermission;
-		if (
-			typeof DeviceMotionEventWithPerm !== "undefined" &&
-			typeof DeviceMotionEventWithPerm.requestPermission === "function"
-		) {
-			DeviceMotionEventWithPerm.requestPermission!()
-				.then((permissionState) => {
-					if (permissionState === "granted") {
-						console.log("Motion permission granted");
-					} else {
-						console.warn("Motion permission denied");
-					}
-				})
-				.catch((err) => {
-					console.error("Error requesting motion permission:", err);
-				});
-		} else {
-			console.log("Motion permission not required on this device.");
-		}
-	};
-
 	return (
 		<div
 			ref={rootRef}
@@ -258,8 +233,8 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 						</p>
 
 						<p className="w-11/12 mx-auto text-center md:text-start">
-							Can I know you? <br />
-							I'll love to look my best to make your visit worthwhile.
+							I'll love to look my best to make your visit worthwhile. <br />{" "}
+							Select the option that best describes you 👇🏾
 						</p>
 
 						<div className="w-full flex flex-col items-center space-y-4">
@@ -298,7 +273,6 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 								className="bg-white relative z-[200] disabled:opacity-50 disabled:cursor-not-allowed"
 								onClick={() => {
 									handleSpinKnow();
-									handleGesturePermission();
 									setTimeout(() => {
 										if (rootRef.current) {
 											setPlaying(true);

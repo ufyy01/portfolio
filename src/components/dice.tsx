@@ -1,5 +1,5 @@
 import { useTexture } from "@react-three/drei";
-import { useContext, useRef, useState, useEffect } from "react";
+import { useContext, useRef, useState, useEffect, useCallback } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { GameContext } from "@/context/gameContext";
@@ -12,6 +12,7 @@ const Dice = () => {
 	// const diceVisible = gameContext?.diceVisible;
 	const isWalking = gameContext?.isWalking;
 	const setLoadingTextures = gameContext?.setLoadingTextures;
+	const boardName = gameContext?.boardName;
 
 	const [texturesLoaded, setTexturesLoaded] = useState(false);
 	const textures = useTexture(
@@ -32,7 +33,7 @@ const Dice = () => {
 	useEffect(() => {
 		if (!ref.current) return;
 		let timer: NodeJS.Timeout;
-		if (isWalking) {
+		if (isWalking || boardName === "special" || boardName === "gameOver") {
 			// hide dice after 500ms when walking begins
 			timer = setTimeout(() => {
 				ref.current!.visible = false;
@@ -44,7 +45,7 @@ const Dice = () => {
 		return () => {
 			clearTimeout(timer);
 		};
-	}, [isWalking]);
+	}, [isWalking, boardName]);
 
 	// Animate dice opacity for smooth appearance/disappearance
 	const { opacity } = useSpring<{ opacity: number }>({
@@ -61,65 +62,14 @@ const Dice = () => {
 	const lastShakeTime = useRef(0);
 	const SHAKE_THRESHOLD = 15;
 
-	useEffect(() => {
-		function handleMotion(event: DeviceMotionEvent) {
-			const acc = event.accelerationIncludingGravity;
-			if (!acc) return;
-			const {
-				x = 0,
-				y = 0,
-				z = 0,
-			} = acc as { x: number; y: number; z: number };
-			const magnitude = Math.sqrt(x * x + y * y + z * z);
-			const now = Date.now();
-			if (magnitude > SHAKE_THRESHOLD && now - lastShakeTime.current > 1000) {
-				lastShakeTime.current = now;
-				handleRotation();
-			}
-		}
-		let permissionListener: () => void;
-		// On iOS, need user permission for devicemotion
-		if (
-			typeof DeviceMotionEvent !== "undefined" &&
-			"requestPermission" in DeviceMotionEvent
-		) {
-			permissionListener = () => {
-				// Type assertion to allow calling requestPermission
-				(
-					DeviceMotionEvent as typeof DeviceMotionEvent & {
-						requestPermission?: () => Promise<string>;
-					}
-				).requestPermission!()
-					.then((state: string) => {
-						if (state === "granted") {
-							window.addEventListener("devicemotion", handleMotion);
-						}
-					})
-					.catch(console.error);
-			};
-			// wait for first user interaction to request permission
-			window.addEventListener("touchstart", permissionListener, { once: true });
-		} else {
-			// other platforms can listen immediately
-			window.addEventListener("devicemotion", handleMotion);
-		}
-		return () => {
-			if (permissionListener) {
-				window.removeEventListener("touchstart", permissionListener);
-			}
-			window.removeEventListener("devicemotion", handleMotion);
-		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	const handleRotation = () => {
+	const handleRotation = useCallback(() => {
 		if (isRotating || isWalking) return;
 
 		setIsRotating(true);
 		setRotationTime(0);
-		// Weighted random selection to reduce probability of faces 0 and 4
-		const weightedFaces = [1, 2, 3, 5, 0, 4]; // Duplicates increase chances
-		const weights = [3, 3, 3, 3, 1, 1]; // Lower weights for index 0 and 4
+		// Weighted random selection to reduce probability of faces 0, 2, 3, and 4
+		const weightedFaces = [1, 5, 1, 5, 1, 5, 0, 2, 3, 4]; // Left and Back weighted heavily
+		const weights = [6, 6, 6, 6, 6, 6, 1, 1, 1, 1]; // Rare for Right, Top, Bottom, Front
 		const totalWeight = weights.reduce((a, b) => a + b, 0);
 		const rand = Math.floor(Math.random() * totalWeight);
 		let cumulative = 0;
@@ -145,7 +95,31 @@ const Dice = () => {
 		setLandingPos(
 			new THREE.Vector3(Math.cos(theta) * r, 0, Math.sin(theta) * r)
 		);
-	};
+	}, [isRotating, isWalking]);
+
+	useEffect(() => {
+		function handleMotion(event: DeviceMotionEvent) {
+			const acc = event.accelerationIncludingGravity;
+			if (!acc) return;
+			const {
+				x = 0,
+				y = 0,
+				z = 0,
+			} = acc as { x: number; y: number; z: number };
+			const magnitude = Math.sqrt(x * x + y * y + z * z);
+			const now = Date.now();
+			if (magnitude > SHAKE_THRESHOLD && now - lastShakeTime.current > 1000) {
+				lastShakeTime.current = now;
+				handleRotation();
+			}
+		}
+
+		window.addEventListener("devicemotion", handleMotion);
+
+		return () => {
+			window.removeEventListener("devicemotion", handleMotion);
+		};
+	}, [isRotating, isWalking, handleRotation]);
 
 	const faceRotations = [
 		new THREE.Euler(0, 0, -Math.PI / 2), // Right
@@ -208,7 +182,9 @@ const Dice = () => {
 			<a.mesh
 				ref={ref}
 				position={[0, 0.5, 0]}
-				onClick={handleRotation}
+				onClick={() => {
+					handleRotation();
+				}}
 				material-opacity={opacity}>
 				<boxGeometry args={[0.7, 0.7, 0.7]} />
 				{textures.map((texture, index) => (

@@ -4,13 +4,18 @@ import { GameContext } from "./gameContext";
 export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 	const [diceFace, setDiceFace] = useState<number | null>(null);
 	const [boardPosition, setBoardPosition] = useState<number | 0>(0);
-	const [boardName, setBoardName] = useState<string | null>(null);
+	const [boardName, setBoardName] = useState<string>("default");
 	const [diceVisible, setDiceVisible] = useState<boolean>(true);
 	const [isWalking, setIsWalking] = useState<boolean>(false);
 	const [visitorType, setVisitorType] = useState<
 		"recruiter" | "developer" | "other"
 	>("other");
 	const [loadingTextures, setLoadingTextures] = useState<boolean>(true);
+	const [showCloudPopup, setShowCloudPopup] = useState<boolean>(false);
+	const [grantedMotionPermission, setGrantedMotionPermission] =
+		useState<boolean>(false);
+	const [playing, setPlaying] = useState<boolean>(false);
+	const [diceMoreThanEnd, setDiceMoreThanEnd] = useState<boolean>(false);
 
 	return (
 		<GameContext.Provider
@@ -29,6 +34,14 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 				setVisitorType,
 				loadingTextures,
 				setLoadingTextures,
+				showCloudPopup,
+				setShowCloudPopup,
+				grantedMotionPermission,
+				setGrantedMotionPermission,
+				playing,
+				setPlaying,
+				diceMoreThanEnd,
+				setDiceMoreThanEnd,
 			}}>
 			{children}
 		</GameContext.Provider>

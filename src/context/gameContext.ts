@@ -5,8 +5,8 @@ export const GameContext = createContext<{
 	setDiceFace: (face: number | null) => void;
 	boardPosition: number | 0;
 	setBoardPosition: (position: number | 0) => number | void;
-	boardName: string | null;
-	setBoardName: (name: string | null) => void;
+	boardName: string;
+	setBoardName: (name: string) => void;
 	diceVisible: boolean;
 	setDiceVisible: (visible: boolean) => void;
 	isWalking: boolean;
@@ -15,4 +15,12 @@ export const GameContext = createContext<{
 	setVisitorType: (type: "recruiter" | "developer" | "other") => void;
 	loadingTextures: boolean;
 	setLoadingTextures: (loading: boolean) => void;
+	showCloudPopup: boolean;
+	setShowCloudPopup: (show: boolean) => void;
+	setGrantedMotionPermission: (granted: boolean) => void;
+	grantedMotionPermission: boolean;
+	playing: boolean;
+	setPlaying: (playing: boolean) => void;
+	diceMoreThanEnd: boolean;
+	setDiceMoreThanEnd: (moreThanEnd: boolean) => void;
 } | null>(null);
