@@ -13,8 +13,6 @@ const Dice = () => {
 	const isWalking = gameContext?.isWalking;
 	const setLoadingTextures = gameContext?.setLoadingTextures;
 
-	console.log(isWalking, "isWalking in Dice component");
-
 	const [texturesLoaded, setTexturesLoaded] = useState(false);
 	const textures = useTexture(
 		[

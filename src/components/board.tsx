@@ -1,11 +1,20 @@
+import { GameContext } from "@/context/gameContext";
 import { useTexture } from "@react-three/drei";
+import { useContext, useState } from "react";
 import * as THREE from "three";
 
 // Preload the board texture
 useTexture.preload("/textures/board.png");
 
 const Board = () => {
-	const boardTexture = useTexture("/textures/board.png");
+	const gameContext = useContext(GameContext);
+
+	const setLoadingTextures = gameContext?.setLoadingTextures;
+	const [texturesLoaded, setTexturesLoaded] = useState(false);
+
+	const boardTexture = useTexture("/textures/board.png", () =>
+		setTexturesLoaded(true)
+	);
 
 	// Create materials
 	const topMaterial = new THREE.MeshStandardMaterial({ map: boardTexture });
@@ -20,6 +29,17 @@ const Board = () => {
 		sideMaterial, // Front
 		sideMaterial, // Back
 	];
+
+	if (!texturesLoaded) {
+		if (setLoadingTextures) {
+			setLoadingTextures(true);
+		}
+		return null;
+	} else {
+		if (setLoadingTextures) {
+			setLoadingTextures(false);
+		}
+	}
 
 	return (
 		<mesh>
