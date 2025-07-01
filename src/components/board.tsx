@@ -4,7 +4,7 @@ import { useContext, useState } from "react";
 import * as THREE from "three";
 
 // Preload the board texture
-useTexture.preload("/textures/gamee.png");
+useTexture.preload("/textures/boardTop.png");
 
 const Board = () => {
 	const gameContext = useContext(GameContext);
@@ -12,7 +12,7 @@ const Board = () => {
 	const setLoadingTextures = gameContext?.setLoadingTextures;
 	const [texturesLoaded, setTexturesLoaded] = useState(false);
 
-	const boardTexture = useTexture("/textures/gamee.png", () =>
+	const boardTexture = useTexture("/textures/boardTop.png", () =>
 		setTexturesLoaded(true)
 	);
 
@@ -42,7 +42,7 @@ const Board = () => {
 	}
 
 	return (
-		<mesh>
+		<mesh receiveShadow>
 			<boxGeometry args={[9, 0.2, 9]} />
 			{materials.map((material, index) => (
 				<meshStandardMaterial

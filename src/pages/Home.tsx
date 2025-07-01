@@ -1,4 +1,9 @@
-import { Float, OrbitControls, useProgress } from "@react-three/drei";
+import {
+	// Environment,
+	Float,
+	OrbitControls,
+	useProgress,
+} from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import Dice from "../components/dice";
 import Model from "../components/model";
@@ -24,7 +29,8 @@ function Home() {
 					camera={{
 						position: isMobile ? [0, 3, 20] : [0, 1, 16],
 						fov: isMobile ? 50 : 30,
-					}}>
+					}}
+					shadows>
 					<OrbitControls
 						makeDefault
 						enableRotate={true}
@@ -37,8 +43,9 @@ function Home() {
 						maxDistance={30}
 						rotateSpeed={1}
 					/>
-
 					<Float>
+						{/* <Environment preset="sunset" /> */}
+						<ambientLight intensity={0.2} />
 						<Dice />
 						<Model />
 						<Board />

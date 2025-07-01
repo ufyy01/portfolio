@@ -3,10 +3,10 @@ import { useContext, useEffect, useRef, useState, useMemo } from "react";
 
 import * as THREE from "three";
 import {
-	Environment,
 	useAnimations,
 	useFBX,
 	useEnvironment,
+	Environment,
 } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import gsap from "gsap";
@@ -24,7 +24,7 @@ const Model = () => {
 		| React.Dispatch<React.SetStateAction<number>>
 		| undefined;
 
-	const meshRef = useRef<THREE.Mesh>(null);
+	const meshRef = useRef<THREE.Object3D>(new THREE.Object3D());
 	// -- camera zoom for action animations --
 	const { camera } = useThree();
 	const origCamPos = useRef(camera.position.clone());
@@ -538,14 +538,30 @@ const Model = () => {
 	return (
 		<>
 			<Environment preset="sunset" />
+
 			{visitorType === "recruiter" && (
-				<Formal ref={meshRef} position={[-3.5, 0.5, 3.5]} />
+				<Formal
+					ref={meshRef}
+					position={[-3.5, 0.5, 3.5]}
+					castShadow
+					receiveShadow
+				/>
 			)}
 			{visitorType === "developer" && (
-				<Dev ref={meshRef} position={[-3.5, 0.5, 3.5]} />
+				<Dev
+					ref={meshRef}
+					position={[-3.5, 0.5, 3.5]}
+					castShadow
+					receiveShadow
+				/>
 			)}
 			{visitorType === "other" && (
-				<Figure ref={meshRef} position={[-3.5, 0.5, 3.5]} />
+				<Figure
+					ref={meshRef}
+					position={[-3.5, 0.5, 3.5]}
+					castShadow
+					receiveShadow
+				/>
 			)}
 		</>
 	);
