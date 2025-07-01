@@ -27,9 +27,10 @@ const Model = () => {
 	const gameContext = useContext(GameContext);
 	const diceFace = gameContext?.diceFace;
 	const boardPosition = gameContext?.boardPosition;
-	const setBoardPosition = gameContext?.setBoardPosition as
-		| React.Dispatch<React.SetStateAction<number>>
-		| undefined;
+	const setBoardPosition = gameContext?.setBoardPosition as React.Dispatch<
+		React.SetStateAction<number>
+	>;
+
 	const setBoardName = gameContext?.setBoardName;
 	const setIsWalking = gameContext?.setIsWalking;
 	const visitorType = gameContext?.visitorType;
@@ -38,7 +39,9 @@ const Model = () => {
 	const meshRef = useRef<THREE.Object3D>(new THREE.Object3D());
 	const lastBoardPositionRef = useRef<number | null>(null);
 	const prevBoardPosition = useRef<number | null>(null);
-	const boardPositionRef = useRef<number>(boardPosition ?? 0); // keep latest for useFrame
+	const boardPositionRef = useRef<number | "default">(
+		boardPosition ?? "default"
+	);
 	const boardNameSetRef = useRef(false);
 	const lastInteractionRef = useRef(Date.now());
 	const prevActionRef = useRef<string>("Idle");
@@ -170,9 +173,11 @@ const Model = () => {
 		if (typeof diceFace === "number" && setBoardPosition) {
 			isMovingRef.current = true;
 			setBoardPosition((prev) => {
-				const next = prev + diceFace;
+				// If prev is "default", reset to 0; otherwise, use prev as number
+				const prevNum = typeof prev === "number" ? prev : 0;
+				const next = prevNum + diceFace;
 				if (next === 16) return 13;
-				return next > 12 ? prev : next;
+				return next > 12 ? prevNum : next;
 			});
 		}
 	}, [diceFace, setBoardPosition]);
@@ -286,7 +291,9 @@ const Model = () => {
 				if (boardPositionRef.current === 12) return;
 
 				// --- Custom zoom level for reduced zoom ---
-				const isReducedZoom = [9, 10, 11].includes(boardPositionRef.current);
+				const isReducedZoom =
+					typeof boardPositionRef.current === "number" &&
+					[9, 10, 11].includes(boardPositionRef.current);
 				const zoomZ = isReducedZoom ? 3 : 4;
 				const zoomX = isReducedZoom ? 2 : 2.5;
 
@@ -379,8 +386,10 @@ const Model = () => {
 				const target = targetPos.current;
 				const dist = currentPos.distanceTo(target);
 				if (dist < 0.01) {
-					setBoardName?.(meshPosition(boardPositionRef.current).name);
-					boardNameSetRef.current = true;
+					if (typeof boardPositionRef.current === "number") {
+						setBoardName?.(meshPosition(boardPositionRef.current).name);
+						boardNameSetRef.current = true;
+					}
 				}
 			}
 			return;
@@ -395,7 +404,11 @@ const Model = () => {
 			if (walkAction) {
 				walkAction.stop();
 			}
-			triggerArrival(boardPositionRef.current);
+			// --- ENSURE lastBoardPositionRef is updated on arrival ---
+			lastBoardPositionRef.current = boardPositionRef.current as number;
+			if (typeof boardPositionRef.current === "number") {
+				triggerArrival(boardPositionRef.current);
+			}
 			smoothFollow();
 			return;
 		}

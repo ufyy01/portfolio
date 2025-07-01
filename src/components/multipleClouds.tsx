@@ -1,4 +1,7 @@
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
 const MultipleClouds = () => {
+	const cloudContainerRef = useRef<HTMLDivElement>(null);
 	const images = [
 		"/images/cloud1.png",
 		"/images/cloud2.png",
@@ -10,8 +13,27 @@ const MultipleClouds = () => {
 		"/images/cloud4.png",
 		"/images/cloud1.png",
 	];
+
+	useEffect(() => {
+		if (!cloudContainerRef.current) return;
+
+		const cloudElements = cloudContainerRef.current.querySelectorAll("img");
+
+		cloudElements.forEach((el, i) => {
+			gsap.to(el, {
+				x: "+=30",
+				duration: 20 + i * 2,
+				ease: "sine.inOut",
+				yoyo: true,
+				repeat: -1,
+			});
+		});
+	}, []);
+
 	return (
-		<div className="absolute inset-0 pointer-events-none -z-10">
+		<div
+			ref={cloudContainerRef}
+			className="absolute inset-0 pointer-events-none -z-10">
 			<div className="relative w-full h-full">
 				{images.map((src, index) => (
 					<img

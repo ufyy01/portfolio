@@ -4,6 +4,7 @@ import { useContext, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import { useIsMobile } from "@/lib/useMoble";
 
 interface DeviceMotionEventWithPermission extends DeviceMotionEvent {
 	requestPermission?: () => Promise<"granted" | "denied">;
@@ -42,9 +43,7 @@ const CloudPopup = () => {
 		}
 	};
 
-	const isMobile =
-		typeof navigator !== "undefined" &&
-		/Mobi|Android/i.test(navigator.userAgent);
+	const isMobile = useIsMobile();
 
 	const boardName = gameContext?.boardName || "default";
 
@@ -56,10 +55,13 @@ const CloudPopup = () => {
 				? `<p>Hi there, I'm Ufuoma. <br />
       Welcome to the game! <br />
       Tap the Dice to start rolling!. <br />
-      Make sure to <span class="font-bold text-orange-400">grant gesture access</span> so you can SHAKE your phone to roll the dice!</p>`
+      Make sure to <span class="font-bold text-orange-400">grant gesture access</span> so you can <span class="font-bold text-orange-400">SHAKE </span> your phone to roll the dice!</p>
+      <p > You can use <span class="font-bold text-orange-400">two fingers to zoom into and out </span> of the board for a custom experience!</p>`
 				: `<p>Hi there, I'm Ufuoma. <br />
-      Welcome to the game! <br />
-      Click the Dice to start rolling!</p>`,
+      Welcome to the game! 
+      Click the Dice to start rolling!</p>
+       <p > You can use your mouse or trackpad to <span class="font-bold text-orange-400"> zoom into and out </span> of the board <br /> for a custom experience!</p>
+      `,
 		},
 		{
 			name: "rollAgain",
@@ -152,7 +154,7 @@ const CloudPopup = () => {
 		<div
 			ref={popupRef}
 			className="z-[1000] w-screen h-screen fixed top-0 left-0 flex items-end justify-end">
-			<div className=" md:h-[35%] w-full md:w-7/12 bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center pb-5">
+			<div className="mb-10 md:mb-0 w-full md:w-7/12 bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center pb-5">
 				<div className="w-10/12 mx-auto space-y-3">
 					<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20">
 						{currentMessage?.title}

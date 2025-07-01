@@ -3,7 +3,9 @@ import { GameContext } from "./gameContext";
 
 export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 	const [diceFace, setDiceFace] = useState<number | null>(null);
-	const [boardPosition, setBoardPosition] = useState<number | 0>(0);
+	const [boardPosition, setBoardPosition] = useState<number | "default">(
+		"default"
+	);
 	const [boardName, setBoardName] = useState<string>("default");
 	const [diceVisible, setDiceVisible] = useState<boolean>(true);
 	const [isWalking, setIsWalking] = useState<boolean>(false);

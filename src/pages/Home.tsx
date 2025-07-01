@@ -10,6 +10,7 @@ import CloudPopup from "@/components/cloudPopup";
 import { GameContext } from "@/context/gameContext";
 import { useContext } from "react";
 import MultipleClouds from "@/components/multipleClouds";
+import { useIsMobile } from "@/lib/useMoble";
 
 function Home() {
 	const gameContext = useContext(GameContext);
@@ -43,9 +44,8 @@ function Home() {
 	}, [boardName, setShowCloudPopup]);
 
 	// detect mobile devices
-	const isMobile =
-		typeof navigator !== "undefined" &&
-		/Mobi|Android/i.test(navigator.userAgent);
+
+	const isMobile = useIsMobile();
 
 	const playing = gameContext?.playing || false;
 	const setPlaying = gameContext?.setPlaying || (() => {});
@@ -53,7 +53,7 @@ function Home() {
 	const { progress } = useProgress();
 
 	return (
-		<>
+		<div className="w-full h-full relative overflow-hidden">
 			{!playing && <OpenScreen progress={progress} setPlaying={setPlaying} />}
 			{playing && (
 				<Canvas
@@ -85,7 +85,7 @@ function Home() {
 			)}
 			{playing && <MultipleClouds />}
 			{playing && showCloudPopup && <CloudPopup />}
-		</>
+		</div>
 	);
 }
 

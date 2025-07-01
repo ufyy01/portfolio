@@ -3,8 +3,8 @@ import { createContext } from "react";
 export const GameContext = createContext<{
 	diceFace: number | null;
 	setDiceFace: (face: number | null) => void;
-	boardPosition: number | 0;
-	setBoardPosition: (position: number | 0) => number | void;
+	boardPosition: number | "default";
+	setBoardPosition: (position: number | "default") => number | void;
 	boardName: string;
 	setBoardName: (name: string) => void;
 	diceVisible: boolean;

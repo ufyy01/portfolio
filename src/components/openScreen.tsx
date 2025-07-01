@@ -42,7 +42,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 		if (introRef.current && rootRef.current) {
 			const tl = gsap.timeline();
 			tl.to(introRef.current, {
-				rotationY: "+=360",
+				opacity: 0,
 				duration: 0.6,
 				transformOrigin: "50% 50%",
 			});

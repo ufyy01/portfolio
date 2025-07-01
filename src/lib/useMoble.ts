@@ -1,31 +1,26 @@
 import { useEffect, useState } from "react";
 
-const REFERENCE_WIDTH = 1920;
-const MOBILE_THRESHOLD = 990;
-
-export const useMobile = () => {
-	const [scaleFactor, setScaleFactor] = useState(
-		window.innerWidth / REFERENCE_WIDTH
-	);
-	const [isMobile, setIsMobile] = useState(
-		window.innerWidth <= MOBILE_THRESHOLD
-	);
+export const useIsMobile = () => {
+	const [isMobile, setIsMobile] = useState(false);
 
 	useEffect(() => {
-		const handleResize = () => {
-			setScaleFactor(window.innerWidth / REFERENCE_WIDTH);
-			if (window.innerWidth <= MOBILE_THRESHOLD) {
-				setIsMobile(true);
-			} else {
-				setIsMobile(false);
-			}
+		const checkMobile = () => {
+			const userAgent = navigator.userAgent || navigator.vendor;
+			const isTouch = "ontouchstart" in window;
+			const isSmallScreen = window.innerWidth <= 768;
+
+			const mobileMatch =
+				/android|iphone|ipad|iPod|opera mini|iemobile|wpdesktop/i.test(
+					userAgent
+				);
+
+			setIsMobile(mobileMatch && isTouch && isSmallScreen);
 		};
-		window.addEventListener("resize", handleResize);
-		return () => window.removeEventListener("resize", handleResize);
+
+		checkMobile();
+		window.addEventListener("resize", checkMobile);
+		return () => window.removeEventListener("resize", checkMobile);
 	}, []);
 
-	return {
-		scaleFactor,
-		isMobile,
-	};
+	return isMobile;
 };
