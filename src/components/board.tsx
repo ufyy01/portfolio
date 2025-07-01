@@ -2,7 +2,7 @@ import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
 
 const Board = () => {
-	const boardTexture = useTexture("/textures/board.PNG");
+	const boardTexture = useTexture("/textures/board.png");
 
 	// Create materials
 	const topMaterial = new THREE.MeshStandardMaterial({ map: boardTexture });
@@ -19,18 +19,16 @@ const Board = () => {
 	];
 
 	return (
-		<>
-			<mesh>
-				<boxGeometry args={[9, 0.2, 9]} />
-				{materials.map((material, index) => (
-					<meshStandardMaterial
-						key={index}
-						attach={`material-${index}`}
-						{...material}
-					/>
-				))}
-			</mesh>
-		</>
+		<mesh receiveShadow>
+			<boxGeometry args={[9, 0.2, 9]} />
+			{materials.map((material, index) => (
+				<meshStandardMaterial
+					key={index}
+					attach={`material-${index}`}
+					{...material}
+				/>
+			))}
+		</mesh>
 	);
 };
 

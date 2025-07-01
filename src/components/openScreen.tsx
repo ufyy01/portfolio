@@ -1,12 +1,28 @@
-import { useLayoutEffect, useRef } from "react";
+import { useContext, useLayoutEffect, useRef, useState } from "react";
+// Extend DeviceMotionEvent to include requestPermission for iOS Safari support
+interface DeviceMotionEventWithPermission extends DeviceMotionEvent {
+	requestPermission?: () => Promise<"granted" | "denied">;
+}
 import gsap from "gsap";
 import { Button } from "./ui/button";
 import { Icon } from "@iconify/react";
-import { useNavigate } from "react-router-dom";
+import { GameContext } from "@/context/gameContext";
 
-const OpenScreen = () => {
+interface OpenScreenProps {
+	progress: number;
+	setPlaying: (playing: boolean) => void;
+}
+
+const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
+	const [doIknowYou, setDoIknowYou] = useState(false);
+
+	const gameContext = useContext(GameContext);
+	const loadingTextures = gameContext?.loadingTextures;
+
+	const setVisitorType = gameContext?.setVisitorType;
+	const visitorType = gameContext?.visitorType;
+
 	const rootRef = useRef<HTMLDivElement>(null);
-	const navigate = useNavigate();
 
 	const images = [
 		"/images/cloud1.png",
@@ -22,23 +38,35 @@ const OpenScreen = () => {
 	const containerRef = useRef(null);
 	const introRef = useRef(null);
 	const continuousRef = useRef<HTMLDivElement>(null);
+	const knowRef = useRef<HTMLDivElement>(null);
 
 	const handleSpinIntro = () => {
 		if (introRef.current && rootRef.current) {
 			const tl = gsap.timeline();
 			tl.to(introRef.current, {
 				rotationY: "+=360",
-				duration: 0.8,
-				ease: "power2.out",
+				duration: 0.6,
 				transformOrigin: "50% 50%",
-			}).to(rootRef.current, {
-				opacity: 0,
-				duration: 0.8,
-				ease: "power1.inOut",
-				onComplete: () => {
-					navigate("/play");
-				},
 			});
+		}
+	};
+
+	const handleSpinKnow = () => {
+		if (knowRef.current && rootRef.current) {
+			const tl = gsap.timeline();
+			tl.to(knowRef.current, {
+				rotationY: "+=360",
+				duration: 0.6,
+				transformOrigin: "50% 50%",
+			}).to(
+				rootRef.current,
+				{
+					opacity: 0,
+					duration: 0.5,
+					ease: "power1.out",
+				},
+				"+=0"
+			);
 		}
 	};
 
@@ -93,6 +121,29 @@ const OpenScreen = () => {
 		}
 	}, [images.length]);
 
+	const handleGesturePermission = () => {
+		const DeviceMotionEventWithPerm =
+			DeviceMotionEvent as unknown as DeviceMotionEventWithPermission;
+		if (
+			typeof DeviceMotionEventWithPerm !== "undefined" &&
+			typeof DeviceMotionEventWithPerm.requestPermission === "function"
+		) {
+			DeviceMotionEventWithPerm.requestPermission!()
+				.then((permissionState) => {
+					if (permissionState === "granted") {
+						console.log("Motion permission granted");
+					} else {
+						console.warn("Motion permission denied");
+					}
+				})
+				.catch((err) => {
+					console.error("Error requesting motion permission:", err);
+				});
+		} else {
+			console.log("Motion permission not required on this device.");
+		}
+	};
+
 	return (
 		<div
 			ref={rootRef}
@@ -117,115 +168,172 @@ const OpenScreen = () => {
 					);
 				})}
 			</div>
-			<div
-				ref={introRef}
-				className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold w-full">
-				<div className="px-5 py-8 bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg space-y-5 w-11/12 lg:w-7/12 mx-auto text-pretty h-96 md:h-full overflow-y-scroll md:overflow-hidden">
-					<p className="font-fraunces italic text-4xl text-orange-200 text-center">
-						Welcome!
-					</p>
-					<p className="w-11/12 mx-auto text-center md:text-start">
-						Somewhere high above the noise of the internet, where clouds drift
-						like thoughts and the code hums softly in the air… A magical board
-						floats, suspended in the sky, waiting for you.. <br />
-						<span className="font-fraunces text-accent italic text-lg">
-							Ufylandia
-						</span>{" "}
-						— a soft, sparkling world handcrafted by a wandering software
-						engineer named{" "}
-						<span className="font-fraunces text-accent italic text-lg">
-							Ufuoma.
-						</span>{" "}
-						<br />
-						She built it from pastel dreams, late-night bugs, and love for the
-						little things.
-					</p>
-					<p className="w-11/12 mx-auto text-center md:text-start">
-						Whether you’re a recruiter seeking talent, a fellow developer
-						looking for kindred code, or just a curious wanderer…
-					</p>
-					<ul className="ms-7">
-						<li className="text-orange-200 text-lg">🎲 Roll the dice</li>
-						<li className="text-orange-200 text-lg">✨ Unlock her journey</li>
-						<li className="text-orange-200 text-lg">
-							🧩 Collect little surprises as you go
-						</li>
-					</ul>
-					<p className="w-11/12 mx-auto text-center">
-						Just make sure to avoid the traps. 🙊
-					</p>
 
-					<div className="flex justify-center">
-						<Button
-							size="lg"
-							className="bg-white relative z-[200] "
-							onClick={handleSpinIntro}>
-							<Icon
-								icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-								width="50"
-								height="50"
-								color="#fc045c"
-								className="w-12 h-12 mr-2"
-							/>
-							<p className="font-fraunces italic text-2xl text-[#fc045c]">
-								Ready to explore?
-							</p>
-						</Button>
-					</div>
-				</div>
-			</div>
-
-			{/* {explore && (
-				<div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold w-full">
-					<div className="px-5 py-8 bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg space-y-5 w-11/12 md:w-1/2 mx-auto text-pretty h-90 lg:h-96">
-						<p className="font-fraunces italic text-4xl text-orange-200">
+			{!doIknowYou && (
+				<div
+					ref={introRef}
+					className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold w-full">
+					<div className="px-5 py-8 bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg space-y-5 w-11/12 lg:w-7/12 2xl:w-1/3 mx-auto text-pretty h-96 md:h-full overflow-y-scroll md:overflow-hidden">
+						<p className="font-fraunces italic text-4xl text-orange-200 text-center">
 							Welcome!
 						</p>
-						<p className="w-11/12 mx-auto">
-							They say if you follow the scent of vanilla code and moon-pink
-							pixels long enough, you’ll find it…
+						<p className="w-11/12 mx-auto text-center md:text-start">
+							Somewhere high above the noise of the internet, where clouds drift
+							like thoughts and the code hums softly in the air… A magical board
+							floats, suspended in the sky, waiting for you.. <br />
+							<span className="font-fraunces text-accent italic text-lg">
+								Ufylandia
+							</span>{" "}
+							✨ a soft, sparkling world handcrafted by a tinkering software
+							engineer named{" "}
+							<span className="font-fraunces text-accent italic text-lg">
+								Ufuoma.
+							</span>{" "}
+							<br />
+							She built it from pastel dreams, late-night bugs, and love for the
+							little things.
 						</p>
-						<p className="w-11/12 mx-auto">
-							A floating board in a realm stitched from daydreams and
-							JavaScript.
+						<p className="w-11/12 mx-auto text-center md:text-start">
+							Whether you’re a recruiter seeking talent, a fellow developer
+							looking for kindred code, or just a curious wanderer…
 						</p>
-						<p className="text-orange-200 text-xl">
-							✨ Welcome to Ufylandia ✨
+						<ul className="ms-8  space-y-2">
+							<li className="text-orange-200 text-lg">🎲 Roll the dice</li>
+							<li className="text-orange-200 text-lg">✨ Unlock her journey</li>
+							<li className="text-orange-200 text-lg">
+								🧩 Collect little surprises as you go
+							</li>
+						</ul>
+						<p className="w-11/12 mx-auto text-center">
+							Just make sure to avoid the traps. 🙊
 						</p>
 
-						<Button
-							size="lg"
-							className="bg-white relative z-[200] "
-							onClick={handleSpinIntro}>
-							<Icon
-								icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-								width="50"
-								height="50"
-								color="#fc045c"
-								className="w-12 h-12 mr-2"
-							/>
-							<p className="font-fraunces italic text-2xl text-[#fc045c]">
-								Ready to explore?
-							</p>
-						</Button>
+						<div className="flex justify-center">
+							<Button
+								size="lg"
+								className="bg-white relative z-[200] "
+								onClick={() => {
+									handleSpinIntro();
+									setTimeout(() => {
+										setDoIknowYou(true);
+									}, 500);
+								}}>
+								<Icon
+									icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
+									width="50"
+									height="50"
+									color="#fc045c"
+									className="w-12 h-12 mr-2"
+								/>
+								<p className="font-fraunces italic text-2xl text-[#fc045c]">
+									Continue
+								</p>
+							</Button>
+						</div>
 					</div>
 				</div>
-			)} */}
+			)}
+
+			{doIknowYou && (
+				<div
+					ref={knowRef}
+					className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-white font-bold w-full">
+					<div className="px-5 py-8 bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg space-y-5 w-11/12 lg:w-7/12 2xl:w-1/3 mx-auto text-pretty h-96 md:h-full overflow-y-scroll md:overflow-hidden">
+						<p className="font-fraunces italic text-4xl text-orange-200 text-center">
+							Can I know you?
+						</p>
+						<p className="w-11/12 mx-auto text-center md:text-start">
+							I’m{" "}
+							<span className="font-fraunces text-accent italic text-lg">
+								Ufuoma
+							</span>
+							, a frontend-focused developer with a soft spot for storytelling,
+							interactivity, and joyful user experiences. I don’t just build
+							projects... I build experiences that resonate, connect, and
+							inspire.
+						</p>
+						<p className="w-11/12 mx-auto text-center md:text-start">
+							Thank you for visiting my little corner of the internet! I’m
+							thrilled to have you here. <br />
+						</p>
+
+						<p className="w-11/12 mx-auto text-center md:text-start">
+							Can I know you? <br />
+							I'll love to look my best to make your visit worthwhile.
+						</p>
+
+						<div className="w-full flex flex-col items-center space-y-4">
+							<Button
+								className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
+									visitorType === "recruiter"
+										? "bg-blue-500 text-white"
+										: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
+								}`}
+								onClick={() => setVisitorType!("recruiter")}>
+								Recruiter
+							</Button>
+							<Button
+								className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
+									visitorType === "developer"
+										? "bg-blue-500 text-white"
+										: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
+								}`}
+								onClick={() => setVisitorType!("developer")}>
+								Developer
+							</Button>
+							<Button
+								className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
+									visitorType === "other"
+										? "bg-blue-500 text-white"
+										: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
+								}`}
+								onClick={() => setVisitorType!("other")}>
+								Casual visitor
+							</Button>
+						</div>
+
+						<div className="flex justify-center">
+							<Button
+								size="lg"
+								className="bg-white relative z-[200] disabled:opacity-50 disabled:cursor-not-allowed"
+								onClick={() => {
+									handleSpinKnow();
+									handleGesturePermission();
+									setTimeout(() => {
+										if (rootRef.current) {
+											setPlaying(true);
+										}
+									}, 500);
+								}}
+								disabled={loadingTextures && progress < 100}>
+								<Icon
+									icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
+									width="50"
+									height="50"
+									color="#fc045c"
+									className="w-12 h-12 mr-2"
+								/>
+								<p className="font-fraunces italic text-2xl text-[#fc045c]">
+									{loadingTextures && progress < 100
+										? `Loading... ${Math.round(progress)}%`
+										: "Ready to explore?"}
+								</p>
+							</Button>
+						</div>
+					</div>
+				</div>
+			)}
+
 			<div
 				ref={continuousRef}
-				className="w-screen h-fit absolute top-0 left-0 z-[100] ">
+				className="w-screen h-fit absolute -top-10 left-0 z-[100]">
 				{images.splice(0, 1).map((src, index) => {
 					return (
 						<img
 							key={index}
 							src={src}
 							alt={`Cloud ${index + 1}`}
-							className="absolute w-[100%] md:w-[50%] cloud-img continuous-cloud"
-							style={{
-								top: `0.2%`,
-								left: `0%`,
-								// transform: "translateX(-50%)",
-							}}
+							className="absolute w-[60%] md:w-[35%] 2xl:w-[25%] cloud-img continuous-cloud"
 						/>
 					);
 				})}

@@ -7,4 +7,12 @@ export const GameContext = createContext<{
 	setBoardPosition: (position: number | 0) => number | void;
 	boardName: string | null;
 	setBoardName: (name: string | null) => void;
+	diceVisible: boolean;
+	setDiceVisible: (visible: boolean) => void;
+	isWalking: boolean;
+	setIsWalking: (walking: boolean) => void;
+	visitorType: "recruiter" | "developer" | "other";
+	setVisitorType: (type: "recruiter" | "developer" | "other") => void;
+	loadingTextures: boolean;
+	setLoadingTextures: (loading: boolean) => void;
 } | null>(null);
