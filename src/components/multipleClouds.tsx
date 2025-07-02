@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
-const MultipleClouds = () => {
+const MultipleClouds = ({ cloudTint = "" }: { cloudTint?: string }) => {
 	const cloudContainerRef = useRef<HTMLDivElement>(null);
 	const images = [
 		"/images/cloud1.png",
@@ -40,7 +40,7 @@ const MultipleClouds = () => {
 						key={index}
 						src={src}
 						alt={`Cloud ${index + 1}`}
-						className="absolute w-[60%] xl:w-[30%] cloud-img"
+						className={`absolute w-[60%] xl:w-[30%] cloud-img ${cloudTint}`}
 						style={{
 							top: `${(index % 3) * 30 + 5}%`,
 							left: `${(index % 4) * 25 + 5}%`,

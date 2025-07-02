@@ -296,6 +296,8 @@ const Model = () => {
 					[9, 10, 11].includes(boardPositionRef.current);
 				const zoomZ = isReducedZoom ? 3 : 4;
 				const zoomX = isReducedZoom ? 2 : 2.5;
+				const modelPos = meshRef.current!.position;
+				const adjustedZoomX = Math.abs(zoomX); // always stay on right side
 
 				const distanceToTarget = meshRef.current!.position.distanceTo(
 					targetPos.current
@@ -303,11 +305,10 @@ const Model = () => {
 				if (distanceToTarget < 0.5) return;
 
 				// Camera zoom/position logic with dynamic Y offset based on model's vertical center
-				const modelPos = meshRef.current!.position;
 				const yOffset = (camera.position.z - modelPos.z) * 0.3 + modelPos.y;
 
 				gsap.to(camera.position, {
-					x: modelPos.x + zoomX,
+					x: modelPos.x + adjustedZoomX,
 					y: yOffset,
 					z: modelPos.z + zoomZ,
 					duration: 1.5,
@@ -317,7 +318,7 @@ const Model = () => {
 							const modelPos = meshRef.current.position.clone();
 							camera.lookAt(modelPos.x, modelPos.y + 0.5, modelPos.z);
 						}
-						camera.updateProjectionMatrix();
+						// camera.updateProjectionMatrix();
 					},
 				});
 			}, 1000);
