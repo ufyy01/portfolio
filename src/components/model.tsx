@@ -141,21 +141,21 @@ const Model = () => {
 	}
 
 	// --- User interaction listeners (for idle wave) ---
-	useEffect(() => {
-		const updateLastInteraction = () => {
-			lastInteractionRef.current = Date.now();
-		};
-		window.addEventListener("click", updateLastInteraction);
-		window.addEventListener("mousemove", updateLastInteraction);
-		window.addEventListener("keydown", updateLastInteraction);
-		window.addEventListener("touchstart", updateLastInteraction);
-		return () => {
-			window.removeEventListener("click", updateLastInteraction);
-			window.removeEventListener("mousemove", updateLastInteraction);
-			window.removeEventListener("keydown", updateLastInteraction);
-			window.removeEventListener("touchstart", updateLastInteraction);
-		};
-	}, []);
+	// useEffect(() => {
+	// 	const updateLastInteraction = () => {
+	// 		lastInteractionRef.current = Date.now();
+	// 	};
+	// 	window.addEventListener("click", updateLastInteraction);
+	// 	window.addEventListener("mousemove", updateLastInteraction);
+	// 	window.addEventListener("keydown", updateLastInteraction);
+	// 	window.addEventListener("touchstart", updateLastInteraction);
+	// 	return () => {
+	// 		window.removeEventListener("click", updateLastInteraction);
+	// 		window.removeEventListener("mousemove", updateLastInteraction);
+	// 		window.removeEventListener("keydown", updateLastInteraction);
+	// 		window.removeEventListener("touchstart", updateLastInteraction);
+	// 	};
+	// }, []);
 
 	// --- Camera follow logic (horizontal only, no zoom logic here) ---
 	const smoothFollow = () => {
