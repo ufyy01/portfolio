@@ -155,7 +155,7 @@ const CloudPopup = () => {
 		<div
 			ref={popupRef}
 			className="z-[2000] w-screen h-screen fixed top-0 left-0 flex items-end justify-end">
-			<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10">
+			<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 shadow-lg relative">
 				<div className="w-9/12 mx-auto space-y-3 h-full">
 					<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20">
 						{currentMessage?.title}

@@ -72,12 +72,10 @@ const RootLayout = () => {
 	}, [boardName, setShowCloudPopup]);
 
 	return (
-		<div className="w-full h-full overflow-hidden">
+		<div className="w-screen h-screen overflow-hidden relative">
 			<div className={`absolute inset-0 -z-10 ${skyColor}`} />
 			{!playing && <OpenScreen progress={progress} setPlaying={setPlaying} />}
-			<main>
-				<Outlet />
-			</main>
+			{playing && <Outlet />}
 			{playing && (
 				<>
 					<MultipleClouds cloudTint={cloudTint} />
