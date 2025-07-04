@@ -18,9 +18,15 @@ const About = () => {
 	const setShowMore = gameContext?.setShowMore;
 	const boardName = gameContext?.boardName || "default";
 
+	if (!showMore || boardName !== "about") {
+		return null;
+	}
+
+	console.log(showMore, boardName);
+
 	return (
-		<Drawer open={showMore && boardName === "about"} onOpenChange={setShowMore}>
-			<DrawerContent className="bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg">
+		<Drawer open={showMore} onOpenChange={setShowMore}>
+			<DrawerContent className="z-[2000] w-screen h-screen fixed bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg">
 				<DrawerHeader>
 					<DrawerTitle>About Me</DrawerTitle>
 					<DrawerDescription>
