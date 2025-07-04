@@ -1,7 +1,6 @@
 import { GameContext } from "@/context/gameContext";
 import { Button } from "./ui/button";
 import { useContext, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { useIsMobile } from "@/lib/useMoble";
@@ -11,15 +10,29 @@ interface DeviceMotionEventWithPermission extends DeviceMotionEvent {
 }
 
 const CloudPopup = () => {
+	const isMobile = useIsMobile();
+
 	const gameContext = useContext(GameContext);
+
+	const popupRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		gsap.fromTo(
+			popupRef.current,
+			{ x: "100%", opacity: 0 },
+			{ x: "0%", opacity: 1, duration: 1 }
+		);
+	}, []);
+
 	const setShowCloudPopup = gameContext?.setShowCloudPopup;
 
-	const navigate = useNavigate();
+	const setShowMore = gameContext?.setShowMore;
 
 	const grantedMotionPermission = gameContext?.grantedMotionPermission;
 	const setGrantedMotionPermission = gameContext?.setGrantedMotionPermission;
 
 	const handleGesturePermission = () => {
+		if (!isMobile || grantedMotionPermission) return;
 		const DeviceMotionEventWithPerm =
 			DeviceMotionEvent as unknown as DeviceMotionEventWithPermission;
 		if (
@@ -42,8 +55,6 @@ const CloudPopup = () => {
 			setGrantedMotionPermission?.(true);
 		}
 	};
-
-	const isMobile = useIsMobile();
 
 	const boardName = gameContext?.boardName || "default";
 
@@ -140,22 +151,12 @@ const CloudPopup = () => {
 
 	const currentMessage = message.find((msg) => msg.name === boardName);
 
-	const popupRef = useRef<HTMLDivElement>(null);
-
-	useEffect(() => {
-		gsap.fromTo(
-			popupRef.current,
-			{ x: "100%", opacity: 0 },
-			{ x: "0%", opacity: 1, duration: 1, ease: "power2.out" }
-		);
-	}, []);
-
 	return (
 		<div
 			ref={popupRef}
-			className="z-[1000] w-screen h-screen fixed top-0 left-0 flex items-end justify-end">
-			<div className="mb-10 md:mb-0 w-full md:w-7/12 bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center pb-5">
-				<div className="w-10/12 mx-auto space-y-3">
+			className="z-[2000] w-screen h-screen fixed top-0 left-0 flex items-end justify-end">
+			<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10">
+				<div className="w-9/12 mx-auto space-y-3 h-full">
 					<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20">
 						{currentMessage?.title}
 					</h2>
@@ -177,7 +178,10 @@ const CloudPopup = () => {
 											ease: "power2.in",
 											onComplete: () => {
 												setShowCloudPopup?.(false);
-												handleGesturePermission();
+												// Defer permission request to avoid re-render during exit animation
+												setTimeout(() => {
+													handleGesturePermission();
+												}, 0);
 											},
 										});
 									}
@@ -257,7 +261,6 @@ const CloudPopup = () => {
 											ease: "power2.in",
 											onComplete: () => {
 												setShowCloudPopup?.(false);
-												navigate(`/${boardName}`);
 											},
 										});
 									}
@@ -282,10 +285,11 @@ const CloudPopup = () => {
 										gsap.to(popupRef.current, {
 											x: "100%",
 											opacity: 0,
-											duration: 0.5,
+											duration: 0.2,
 											ease: "power2.in",
 											onComplete: () => {
 												setShowCloudPopup?.(false);
+												setShowMore?.(true);
 											},
 										});
 									}

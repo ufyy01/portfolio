@@ -145,16 +145,15 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 		if (knowRef.current) {
 			const el = knowRef.current;
 			gsap.set(el, {
-				x: "100%",
 				opacity: 0,
-				skewX: 85,
-				transformOrigin: "right center",
+				scale: 0.98,
+				willChange: "opacity, transform",
 			});
 			gsap.to(el, {
-				x: "0%",
 				opacity: 1,
-				skewX: 0,
-				duration: 0.6,
+				scale: 1,
+				duration: 1,
+				ease: "power2.out",
 			});
 		}
 	}, []);
@@ -167,16 +166,18 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 				ref={containerRef}
 				className="w-full h-full relative overflow-hidden">
 				{images.map((src, index) => {
-					const randomTop = Math.floor(Math.random() * 90) + -20; // Range: 20% to 60%
 					return (
 						<img
 							key={index}
 							src={src}
 							alt={`Cloud ${index + 1}`}
-							className="absolute w-[100%] xl:w-[50%] cloud-img"
+							className={`absolute w-[100%] xl:w-[50%] cloud-img ${cloudTint}`}
 							style={{
-								top: `${randomTop}%`,
-								left: `${20 + index * 10}%`, // Adjust left position for each cloud
+								top:
+									index % 2 === 0
+										? `calc(${20 + index * 10}%)`
+										: `calc(${-20 + index * 10}%)`,
+								left: `calc(${20 + index * 10}%)`,
 								transform: "translateX(-50%)",
 							}}
 						/>

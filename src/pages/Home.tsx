@@ -11,6 +11,7 @@ import { GameContext } from "@/context/gameContext";
 import { useContext } from "react";
 import MultipleClouds from "@/components/multipleClouds";
 import { useIsMobile } from "@/lib/useMoble";
+import About from "./About";
 
 function Home() {
 	const gameContext = useContext(GameContext);
@@ -80,8 +81,6 @@ function Home() {
 		}
 	}, []);
 
-	console.log("Cloud tint:", cloudTint);
-
 	return (
 		<div className="w-full h-full relative overflow-hidden">
 			<div className={`absolute inset-0 -z-10 ${skyColor}`} />
@@ -116,6 +115,7 @@ function Home() {
 			)}
 			{playing && <MultipleClouds cloudTint={cloudTint} />}
 			{playing && showCloudPopup && <CloudPopup />}
+			{playing && <About />}
 		</div>
 	);
 }

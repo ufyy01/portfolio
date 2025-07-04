@@ -43,14 +43,12 @@ const Model = () => {
 		boardPosition ?? "default"
 	);
 	const boardNameSetRef = useRef(false);
-	const lastInteractionRef = useRef(Date.now());
 	const prevActionRef = useRef<string>("Idle");
 	const waveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const arrivalTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 	const targetPos = useRef(new THREE.Vector3());
 	const isMovingRef = useRef(false);
 	const hasArrivedRef = useRef(false);
-	const initialMeshX = useRef(-3.5);
 
 	// --- Camera ---
 	const { camera } = useThree();
@@ -140,32 +138,21 @@ const Model = () => {
 		}
 	}
 
-	// --- User interaction listeners (for idle wave) ---
-	// useEffect(() => {
-	// 	const updateLastInteraction = () => {
-	// 		lastInteractionRef.current = Date.now();
-	// 	};
-	// 	window.addEventListener("click", updateLastInteraction);
-	// 	window.addEventListener("mousemove", updateLastInteraction);
-	// 	window.addEventListener("keydown", updateLastInteraction);
-	// 	window.addEventListener("touchstart", updateLastInteraction);
-	// 	return () => {
-	// 		window.removeEventListener("click", updateLastInteraction);
-	// 		window.removeEventListener("mousemove", updateLastInteraction);
-	// 		window.removeEventListener("keydown", updateLastInteraction);
-	// 		window.removeEventListener("touchstart", updateLastInteraction);
-	// 	};
-	// }, []);
-
 	// --- Camera follow logic (horizontal only, no zoom logic here) ---
 	const smoothFollow = () => {
 		if (!camera || !meshRef.current) return;
-		// horizontal follow
-		const initialX = initialMeshX.current;
-		const offsetX = origCamPos.current.x - initialX;
-		const targetX = meshRef.current.position.x + offsetX;
-		camera.position.x = THREE.MathUtils.lerp(camera.position.x, targetX, 0.1);
+		// Smoothly follow the model while preserving current zoom and orientation
+		const modelCenter = meshRef.current.position
+			.clone()
+			.add(new THREE.Vector3(0, 0.5, 0));
+		const currentPos = camera.position.clone();
+		const offset = currentPos.sub(modelCenter);
+		const distance = offset.length();
+		const dir = offset.normalize();
+		const desiredPos = modelCenter.clone().add(dir.multiplyScalar(distance));
+		camera.position.lerp(desiredPos, 0.1);
 		camera.updateProjectionMatrix();
+		camera.lookAt(modelCenter);
 	};
 
 	// --- Dice roll: advance boardPosition ---
@@ -288,16 +275,35 @@ const Model = () => {
 		let timer: NodeJS.Timeout;
 		if (animation === "Walk") {
 			timer = setTimeout(() => {
+				// --- Patch: Reset camera if at position 0 or 12 ---
+				const resetCameraPositions = [0, 12];
+				if (resetCameraPositions.includes(boardPositionRef.current as number)) {
+					gsap.to(camera.position, {
+						x: origCamPos.current.x,
+						y: origCamPos.current.y,
+						z: origCamPos.current.z,
+						duration: 1.5,
+						ease: "power2.inOut",
+						onUpdate: () => {
+							if (meshRef.current) {
+								const modelPos = meshRef.current.position.clone();
+								camera.lookAt(modelPos.x, modelPos.y + 0.5, modelPos.z);
+							}
+						},
+					});
+					return;
+				}
+
 				if (boardPositionRef.current === 12) return;
 
-				// --- Custom zoom level for reduced zoom ---
-				const isReducedZoom =
-					typeof boardPositionRef.current === "number" &&
-					[9, 10, 11].includes(boardPositionRef.current);
-				const zoomZ = isReducedZoom ? 3 : 4;
-				const zoomX = isReducedZoom ? 2 : 2.5;
+				// --- Reduced zoom logic for positions 6, 7, 8, 9 ---
+				const reducedZoom = [6, 7, 8, 9].includes(
+					boardPositionRef.current as number
+				);
+				const zoomZ = reducedZoom ? -2 : 4;
+				const zoomX = 2.5;
 				const modelPos = meshRef.current!.position;
-				const adjustedZoomX = Math.abs(zoomX); // always stay on right side
+				const adjustedZoomX = Math.abs(zoomX);
 
 				const distanceToTarget = meshRef.current!.position.distanceTo(
 					targetPos.current
@@ -327,43 +333,6 @@ const Model = () => {
 			clearTimeout(timer);
 		};
 	}, [animation, camera, zoomedInPos, origCamPos]);
-
-	// --- Idle wave: schedule after inactivity ---
-	useEffect(() => {
-		if (waveTimeoutRef.current) {
-			clearTimeout(waveTimeoutRef.current);
-			waveTimeoutRef.current = null;
-		}
-		if (animation === "Idle" && !isMovingRef.current) {
-			const now = Date.now();
-			const inactiveFor = now - lastInteractionRef.current;
-			const delay = Math.max(0, 5000 - inactiveFor);
-			waveTimeoutRef.current = setTimeout(() => {
-				const waveAction = actions["Wave"];
-				const idleAction = actions["Idle"];
-				const prevAction = actions[prevActionRef.current];
-				if (waveAction && idleAction) {
-					if (prevAction && prevAction !== waveAction) {
-						prevAction.fadeOut(0.3);
-					}
-					waveAction.reset().fadeIn(0.3).play();
-					prevActionRef.current = "Wave";
-					const clip = waveAction.getClip();
-					waveTimeoutRef.current = setTimeout(() => {
-						waveAction.fadeOut(0.3);
-						idleAction.reset().fadeIn(0.3).play();
-						prevActionRef.current = "Idle";
-						setAnimation("Idle");
-					}, clip.duration * 1000);
-				}
-			}, delay);
-		}
-		return () => {
-			if (waveTimeoutRef.current) {
-				clearTimeout(waveTimeoutRef.current);
-			}
-		};
-	}, [animation, actions]);
 
 	// --- Smooth movement & arrival detection ---
 	const walkSpeed = 1.5;

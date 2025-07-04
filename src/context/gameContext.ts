@@ -11,6 +11,8 @@ export const GameContext = createContext<{
 	setDiceVisible: (visible: boolean) => void;
 	isWalking: boolean;
 	setIsWalking: (walking: boolean) => void;
+	isDismissing: boolean;
+	setIsDismissing: (dismissing: boolean) => void;
 	visitorType: "recruiter" | "developer" | "other";
 	setVisitorType: (type: "recruiter" | "developer" | "other") => void;
 	loadingTextures: boolean;
@@ -23,4 +25,6 @@ export const GameContext = createContext<{
 	setPlaying: (playing: boolean) => void;
 	diceMoreThanEnd: boolean;
 	setDiceMoreThanEnd: (moreThanEnd: boolean) => void;
+	showMore: boolean;
+	setShowMore: (show: boolean) => void;
 } | null>(null);

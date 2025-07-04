@@ -18,6 +18,8 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 		useState<boolean>(false);
 	const [playing, setPlaying] = useState<boolean>(false);
 	const [diceMoreThanEnd, setDiceMoreThanEnd] = useState<boolean>(false);
+	const [isDismissing, setIsDismissing] = useState<boolean>(false);
+	const [showMore, setShowMore] = useState<boolean>(false);
 
 	return (
 		<GameContext.Provider
@@ -44,6 +46,10 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 				setPlaying,
 				diceMoreThanEnd,
 				setDiceMoreThanEnd,
+				isDismissing,
+				setIsDismissing,
+				showMore,
+				setShowMore,
 			}}>
 			{children}
 		</GameContext.Provider>
