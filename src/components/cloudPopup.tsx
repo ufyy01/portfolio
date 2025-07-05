@@ -261,6 +261,7 @@ const CloudPopup = () => {
 											ease: "power2.in",
 											onComplete: () => {
 												setShowCloudPopup?.(false);
+												setShowMore?.(true);
 											},
 										});
 									}
@@ -289,7 +290,6 @@ const CloudPopup = () => {
 											ease: "power2.in",
 											onComplete: () => {
 												setShowCloudPopup?.(false);
-												setShowMore?.(true);
 											},
 										});
 									}

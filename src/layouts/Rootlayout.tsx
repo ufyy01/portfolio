@@ -7,6 +7,12 @@ import { GameContext } from "@/context/gameContext";
 import { useContext } from "react";
 import MultipleClouds from "@/components/multipleClouds";
 import About from "@/pages/About";
+import Contact from "@/pages/Contact";
+import Controller from "@/pages/Controller";
+import Projects from "@/pages/Projects";
+import Resume from "@/pages/Resume";
+import Skills from "@/pages/Skills";
+import type { ReactElement } from "react";
 
 const RootLayout = () => {
 	const gameContext = useContext(GameContext);
@@ -31,6 +37,15 @@ const RootLayout = () => {
 			return "bg-gradient-to-b from-blue-800 to-gray-900"; // low saturation night
 		}
 	}, []);
+
+	const boardComponents: Record<string, ReactElement> = {
+		about: <About />,
+		contact: <Contact />,
+		controller: <Controller />,
+		projects: <Projects />,
+		resume: <Resume />,
+		skills: <Skills />,
+	};
 
 	const cloudTint = useMemo(() => {
 		const hour = new Date().getHours();
@@ -80,7 +95,7 @@ const RootLayout = () => {
 				<>
 					<MultipleClouds cloudTint={cloudTint} />
 					{showCloudPopup && <CloudPopup />}
-					{boardName === "about" && <About />}
+					{boardComponents[boardName]}
 				</>
 			)}
 		</div>
