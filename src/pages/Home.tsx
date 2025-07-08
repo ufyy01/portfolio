@@ -14,7 +14,7 @@ function Home() {
 		<div className="w-full h-full overflow-hidden ">
 			<Canvas
 				camera={{
-					position: isMobile ? [0, 3, 20] : [0, 1, 16],
+					position: isMobile ? [-20, 3, 20] : [-15, 1, 15],
 					fov: isMobile ? 50 : 30,
 				}}
 				shadows>

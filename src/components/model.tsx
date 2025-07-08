@@ -49,10 +49,15 @@ const Model = () => {
 	const targetPos = useRef(new THREE.Vector3());
 	const isMovingRef = useRef(false);
 	const hasArrivedRef = useRef(false);
+	// --- Move path for sequential ring traversal ---
+	const movePathRef = useRef<number[] | null>(null);
 
 	// --- Camera ---
+	// --- Return path for hugging the outer ring ---
+	const returnPathRef = useRef<number[] | null>(null);
 	const { camera } = useThree();
 	const origCamPos = useRef(camera.position.clone());
+	console.log("Original camera position:", origCamPos.current);
 	origCamPos.current.z *= 1;
 	origCamPos.current.x *= 1;
 	const zoomedInPos = useMemo(() => {
@@ -126,7 +131,7 @@ const Model = () => {
 			case 9:
 				return { position: { x: -3.5, y: 0.5, z: -3 }, name: "jumpAhead" };
 			case 10:
-				return { position: { x: -3.5, y: 0.5, z: 0 }, name: "controller" };
+				return { position: { x: -3.5, y: 0.5, z: -1 }, name: "controller" };
 			case 11:
 				return { position: { x: -3.5, y: 0.5, z: 1.5 }, name: "resume" };
 			case 12:
@@ -158,14 +163,34 @@ const Model = () => {
 	// --- Dice roll: advance boardPosition ---
 	useEffect(() => {
 		if (typeof diceFace === "number" && setBoardPosition) {
+			// Calculate target based on previous clamp logic and special case
+			const prevNum =
+				typeof boardPositionRef.current === "number"
+					? boardPositionRef.current
+					: 0;
+			const rawNew = prevNum + diceFace;
+			let targetNum: number;
+			if (rawNew === 16) {
+				targetNum = 13;
+			} else {
+				targetNum = rawNew > 12 ? prevNum : rawNew;
+			}
+			// If target is same as current, do not move
+			if (targetNum === prevNum) {
+				return;
+			}
+			// Build the sequential path from prevNum+1 to targetNum
+			const path: number[] = [];
+			for (let pos = prevNum + 1; pos <= targetNum; pos++) {
+				path.push(pos);
+			}
+			movePathRef.current = path;
+			const first = movePathRef.current.shift()!;
+			setBoardPosition(first);
+			const { position: newPos } = meshPosition(first);
+			targetPos.current.set(newPos.x, newPos.y, newPos.z);
 			isMovingRef.current = true;
-			setBoardPosition((prev) => {
-				// If prev is "default", reset to 0; otherwise, use prev as number
-				const prevNum = typeof prev === "number" ? prev : 0;
-				const next = prevNum + diceFace;
-				if (next === 16) return 13;
-				return next > 12 ? prevNum : next;
-			});
+			setAnimation("Walk");
 		}
 	}, [diceFace, setBoardPosition]);
 
@@ -237,6 +262,15 @@ const Model = () => {
 
 	// --- Animation: crossfade/looping logic ---
 	useEffect(() => {
+		// Prevent resetting walk cycle when continuing to walk between tiles,
+		// but ensure the walk action is playing
+		if (animation === "Walk" && prevActionRef.current === "Walk") {
+			const walkAction = actions["Walk"];
+			if (walkAction && !walkAction.isRunning()) {
+				walkAction.play();
+			}
+			return;
+		}
 		const action = actions[animation];
 		const prevAction = actions[prevActionRef.current];
 		const isIdleEase = prevActionRef.current === "Walk" && animation === "Idle";
@@ -253,14 +287,14 @@ const Model = () => {
 			prevAction.fadeOut(fadeDuration);
 			action
 				.reset()
-				.setEffectiveTimeScale(1)
+				.setEffectiveTimeScale(animation === "Walk" ? walkSpeed : 1)
 				.setEffectiveWeight(1)
 				.fadeIn(fadeDuration)
 				.play();
 		} else {
 			action
 				.reset()
-				.setEffectiveTimeScale(1)
+				.setEffectiveTimeScale(animation === "Walk" ? walkSpeed : 1)
 				.setEffectiveWeight(1)
 				.fadeIn(fadeDuration)
 				.play();
@@ -335,7 +369,9 @@ const Model = () => {
 	}, [animation, camera, zoomedInPos, origCamPos]);
 
 	// --- Smooth movement & arrival detection ---
-	const walkSpeed = 1.5;
+	const walkSpeed = 1.2;
+	const rotationLerpSpeed = 5.0; // higher value = faster rotation alignment
+
 	useFrame((_, delta) => {
 		if (!meshRef.current) return;
 		const current = meshRef.current.position;
@@ -364,20 +400,31 @@ const Model = () => {
 			}
 			return;
 		}
+
 		const arrivalThreshold = 0.05;
+
 		if (distance <= arrivalThreshold) {
 			meshRef.current.position.copy(targetPos.current);
+			// Update last position
+			lastBoardPositionRef.current = boardPositionRef.current as number;
+			// If still on a move or return path, immediately trigger next step without stopping
+			if (
+				(movePathRef.current && movePathRef.current.length > 0) ||
+				(returnPathRef.current && returnPathRef.current.length > 0)
+			) {
+				triggerArrival(boardPositionRef.current as number);
+				smoothFollow();
+				return;
+			}
+			// Final arrival: stop movement and walk animation
 			isMovingRef.current = false;
 			hasArrivedRef.current = true;
 			setIsWalking?.(false);
 			const walkAction = actions["Walk"];
-			if (walkAction) {
-				walkAction.stop();
-			}
-			// --- ENSURE lastBoardPositionRef is updated on arrival ---
-			lastBoardPositionRef.current = boardPositionRef.current as number;
+			if (walkAction) walkAction.stop();
+			// Proceed with any arrival logic (e.g., continue return path)
 			if (typeof boardPositionRef.current === "number") {
-				triggerArrival(boardPositionRef.current);
+				triggerArrival(boardPositionRef.current as number);
 			}
 			smoothFollow();
 			return;
@@ -386,31 +433,34 @@ const Model = () => {
 		if (animation !== "Walk") {
 			setAnimation("Walk");
 		}
-		const step = walkSpeed * delta;
-		// Custom axis-based movement and rotation logic
-		const diffX = Math.abs(targetPos.current.x - current.x);
-		const diffZ = Math.abs(targetPos.current.z - current.z);
-		if (diffX > 0.01) {
-			current.x = THREE.MathUtils.lerp(
-				current.x,
-				targetPos.current.x,
-				Math.min(1, step / diffX)
-			);
-			if (targetPos.current.x > current.x) {
-				meshRef.current!.rotation.y = Math.PI / 2; // facing right
+		// const step = walkSpeed * delta;
+		const diffX = targetPos.current.x - current.x;
+		const diffZ = targetPos.current.z - current.z;
+
+		const distanceTotal = Math.hypot(diffX, diffZ);
+		if (distanceTotal > arrivalThreshold) {
+			// Compute direction vector
+			const direction = targetPos.current.clone().sub(current).normalize();
+			const moveDist = walkSpeed * delta;
+			if (moveDist < distanceTotal) {
+				// Move by fixed step toward target
+				current.add(direction.multiplyScalar(moveDist));
 			} else {
-				meshRef.current!.rotation.y = -Math.PI / 2; // facing left
+				// If close, snap exactly
+				current.copy(targetPos.current);
 			}
-		} else if (diffZ > 0.01) {
-			current.z = THREE.MathUtils.lerp(
-				current.z,
-				targetPos.current.z,
-				Math.min(1, step / diffZ)
-			);
-			if (targetPos.current.z > current.z) {
-				meshRef.current!.rotation.y = 0; // facing forward
-			} else {
-				meshRef.current!.rotation.y = Math.PI; // facing backward
+			const isReturning =
+				returnPathRef.current && returnPathRef.current.length > 0;
+			if (!isReturning) {
+				// Smoothly interpolate rotation toward movement direction
+				const angle = Math.atan2(-direction.z, direction.x) + Math.PI / 2;
+				const currentY = meshRef.current!.rotation.y;
+				const newY = THREE.MathUtils.lerp(
+					currentY,
+					angle,
+					Math.min(1, rotationLerpSpeed * delta)
+				);
+				meshRef.current!.rotation.y = newY;
 			}
 		}
 		smoothFollow();
@@ -418,6 +468,30 @@ const Model = () => {
 
 	// --- Arrival logic ---
 	function triggerArrival(pos?: number) {
+		// If a move path is in progress, continue sequential traversal
+		if (movePathRef.current && movePathRef.current.length > 0) {
+			const nextPos = movePathRef.current.shift()!;
+			setBoardPosition!(nextPos);
+			const { position: newPos } = meshPosition(nextPos);
+			targetPos.current.set(newPos.x, newPos.y, newPos.z);
+			isMovingRef.current = true;
+			// Let movement smoothing handle facing; always play Walk animation
+			if (prevActionRef.current !== "Walk") {
+				setAnimation("Walk");
+			}
+			return;
+		}
+		// If a return path is in progress, walk through its positions
+		if (returnPathRef.current && returnPathRef.current.length > 0) {
+			const nextReturn = returnPathRef.current.shift()!;
+			setBoardPosition!(nextReturn);
+			const { position: newPos } = meshPosition(nextReturn);
+			targetPos.current.set(newPos.x, newPos.y, newPos.z);
+			isMovingRef.current = true;
+			// Do not forcibly set animation or orientation; let movement logic handle it
+			// (removed rotation and animation guards for return path)
+			return;
+		}
 		if (arrivalTimeoutRef.current) {
 			clearTimeout(arrivalTimeoutRef.current);
 		}
@@ -436,6 +510,8 @@ const Model = () => {
 				} else {
 					setAnimation("Idle");
 				}
+				// Clear return path when we finally reach start
+				returnPathRef.current = null;
 				break;
 			case 1:
 				setAnimation("Jump");
@@ -451,19 +527,26 @@ const Model = () => {
 				if (actions["Defeated"]) {
 					const clip = actions["Defeated"].getClip();
 					arrivalTimeoutRef.current = setTimeout(() => {
-						setBoardPosition!(0);
-						const { position: newPos } = meshPosition(0);
+						// Initialize return path hugging the outer ring
+						returnPathRef.current = [5, 4, 3, 2, 1, 0];
+						const nextPos = returnPathRef.current.shift()!;
+						setBoardPosition!(nextPos);
+						const { position: newPos } = meshPosition(nextPos);
 						targetPos.current.set(newPos.x, newPos.y, newPos.z);
 						isMovingRef.current = true;
-						setAnimation("Walk");
+						// meshRef.current!.rotation.y = -Math.PI / 2; // face forward instead of backward
+						// Do not setAnimation("Walk") here; let normal movement logic play Walk continuously
 					}, clip.duration * 1000);
 				} else {
+					// Fallback timing
 					arrivalTimeoutRef.current = setTimeout(() => {
-						setBoardPosition!(0);
-						const { position: newPos } = meshPosition(0);
+						returnPathRef.current = [5, 4, 3, 2, 1, 0];
+						const nextPos = returnPathRef.current.shift()!;
+						setBoardPosition!(nextPos);
+						const { position: newPos } = meshPosition(nextPos);
 						targetPos.current.set(newPos.x, newPos.y, newPos.z);
 						isMovingRef.current = true;
-						setAnimation("Walk");
+						// meshRef.current!.rotation.y = 0;
 					}, 1000);
 				}
 				break;

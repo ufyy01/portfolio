@@ -6,12 +6,21 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+	font-family: "helvetica";
+	src: url("/font/Helvetica.woff2") format("woff2");
+}
+
 .font-dm-sans {
 	font-family: "DM Sans", sans-serif;
 }
 
 .font-fraunces {
 	font-family: "Fraunces", serif;
+}
+
+.font-helvetica {
+	font-family: "helvetica", sans-serif;
 }
 
 #root {
@@ -22,15 +31,14 @@
 body {
 	margin: 0;
 	padding: 0;
-	font-family: "DM Sans", sans-serif;
-	font-size: 16px;
+	font-family: "helvetica", sans-serif;
+	font-size: 18px;
 	/* background-color: oklch(80.9% 0.105 251.813); */
 }
 
 canvas {
 	width: 100vw;
 	height: 100vh;
-	z-index: 100;
 }
 
 @theme inline {

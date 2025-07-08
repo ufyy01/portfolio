@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import OpenScreen from "@/components/openScreen";
 import CloudPopup from "@/components/cloudPopup";
 import { useProgress } from "@react-three/drei";
@@ -13,8 +13,10 @@ import Projects from "@/pages/Projects";
 import Resume from "@/pages/Resume";
 import Skills from "@/pages/Skills";
 import type { ReactElement } from "react";
+import { Icon } from "@iconify/react/dist/iconify.js";
 
 const RootLayout = () => {
+	const [muted, setMuted] = useState(false);
 	const gameContext = useContext(GameContext);
 	const showCloudPopup = gameContext?.showCloudPopup || false;
 	const setShowCloudPopup = gameContext?.setShowCloudPopup;
@@ -93,9 +95,30 @@ const RootLayout = () => {
 			{playing && <Outlet />}
 			{playing && (
 				<>
+					<button
+						onClick={() => setMuted(!muted)}
+						className="absolute top-4 right-4 z-50 bg-white/80 backdrop-blur-sm text-black px-3 py-1 rounded-full shadow-lg hover:bg-white/90 transition-colors duration-300">
+						{muted ? (
+							<Icon icon="wpf:speaker" width="26" height="26" color="#fc045c" />
+						) : (
+							<Icon
+								icon="heroicons:speaker-x-mark-20-solid"
+								width="26"
+								height="26"
+								color="#fc045c"
+							/>
+						)}
+					</button>
 					<MultipleClouds cloudTint={cloudTint} />
 					{showCloudPopup && <CloudPopup />}
 					{boardComponents[boardName]}
+					<audio
+						src="/audio/kazez.mp3"
+						autoPlay
+						loop
+						muted={muted}
+						className="opacity-0"
+					/>
 				</>
 			)}
 		</div>

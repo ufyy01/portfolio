@@ -58,6 +58,18 @@ const CloudPopup = () => {
 
 	const boardName = gameContext?.boardName || "default";
 
+	const headsetMessage = [
+		`<p>I am always listening to music when coding.</p>`,
+		`<p>Music helps me focus and stay in the zone.</p>`,
+		`<p>My favorite genres are electronic and indie rock.</p>`,
+		`<p>I love discovering new artists and tracks.</p>`,
+		`<p>Music is my constant companion while I work.</p>`,
+		`<p>My favorite genre is K-Pop.</p>`,
+		`<p>My current favorite song is "Drowning" by Woodz</p>`,
+		`<p>Music inspires my creativity and keeps me motivated.</p>`,
+		`<p>What music do you like to listen to?</p>`,
+	];
+
 	const message = [
 		{
 			name: "default",
@@ -69,9 +81,9 @@ const CloudPopup = () => {
       Make sure to <span class="font-bold text-orange-400">grant gesture access</span> so you can <span class="font-bold text-orange-400">SHAKE </span> your phone to roll the dice!</p>
       <p > You can use <span class="font-bold text-orange-400">two fingers to zoom into and out </span> of the board for a custom experience!</p>`
 				: `<p>Hi there, I'm Ufuoma. <br />
-      Welcome to the game! 
+      Welcome to the game! <br />
       Click the Dice to start rolling!</p>
-       <p > You can use your mouse or trackpad to <span class="font-bold text-orange-400"> zoom into and out </span> of the board <br /> for a custom experience!</p>
+       <p > You can use your mouse or trackpad to <br /> <span class="font-bold text-orange-400"> zoom into and out </span> of the board <br /> for a custom experience!</p>
       `,
 		},
 		{
@@ -119,13 +131,13 @@ const CloudPopup = () => {
 		},
 		{
 			name: "headset",
-			title: "Headset",
-			text: `<p>This is my trusty headset, essential for immersive experiences and communication.</p>`,
+			title: "Music",
+			text: headsetMessage[Math.floor(Math.random() * headsetMessage.length)],
 		},
 		{
 			name: "contact",
 			title: "Contact Me",
-			text: `<p>If you'd like to get in touch, feel free to reach out through my contact page.</p>`,
+			text: `<p>Let's create something amazing together!</p>`,
 		},
 		{
 			name: "jumpAhead",
@@ -155,7 +167,7 @@ const CloudPopup = () => {
 		<div
 			ref={popupRef}
 			className="z-[2000] w-screen h-screen fixed top-0 left-0 flex items-end justify-end">
-			<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 shadow-lg relative mb-10 md:mb-0">
+			<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
 				<div className="w-9/12 mx-auto space-y-3 h-full">
 					<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20">
 						{currentMessage?.title}

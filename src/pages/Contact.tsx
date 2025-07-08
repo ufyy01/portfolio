@@ -12,6 +12,8 @@ import {
 	DrawerTitle,
 } from "@/components/ui/drawer";
 
+import { Icon } from "@iconify/react/dist/iconify.js";
+
 const Contact = () => {
 	const gameContext = useContext(GameContext);
 	const showMore = gameContext?.showMore;
@@ -24,23 +26,67 @@ const Contact = () => {
 
 	return (
 		<Drawer open={showMore} onOpenChange={setShowMore}>
-			<DrawerContent className="z-[2000] w-screen h-screen fixed bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg">
+			<DrawerContent className="z-[2000] bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg w-screen md:w-8/12 overflow-hidden overflow-y-auto lg:overflow-y-hidden md:h-fit  pb-5 after:hidden ">
 				<DrawerHeader>
-					<DrawerTitle>Contact Me</DrawerTitle>
-					<DrawerDescription>
-						Feel free to reach out if you have any questions or just want to say
-						hi! You can contact me via email at{" "}
-						<a href="mailto:amazingufy@gmail.com" className="text-blue-500">
-							amazingufy@gmail.com
-						</a>
-						or connect with me on social media. I'm always happy to hear from
-						you!
+					<DrawerTitle className=""></DrawerTitle>
+					<DrawerDescription className="w-11/12 flex flex-col md:flex-row mx-auto gap-5 text-white text-start">
+						<div className="lg:w-1/3  ">
+							<div className="text-lg">
+								<p className="text-start font-fraunces italic text-orange-400 mt-10 text-3xl md:text-5xl">
+									Let's talk
+								</p>
+								<p className="text-start my-5">
+									Let's talk about that project you're working on! <br /> or
+									just say hi!
+								</p>
+							</div>
+							<div>
+								<div className="flex items-center gap-2">
+									<Icon
+										icon="line-md:phone-filled"
+										width="24"
+										height="24"
+										color="#fc045c"
+									/>
+									<p>
+										<a
+											href="tel:+2348064592287"
+											className="text-white cursor-pointer">
+											+234 806 459 2287
+										</a>
+									</p>
+								</div>
+								<div className="flex items-center gap-2 mt-2">
+									<Icon
+										icon="line-md:email-alt-filled"
+										width="24"
+										height="24"
+										color="#fc045c"
+									/>
+									<p>
+										<a
+											href="mailto:amazingufy@gmail.com"
+											className="text-white cursor-pointer">
+											amazingufy@gmail.com
+										</a>
+									</p>
+								</div>
+							</div>
+						</div>
+						<div className="lg:w-2/3 mt-5">
+							<img
+								src="/images/ufuoma_contact_qr.png"
+								alt="Contact QR Code"
+								className="w-full h-auto"
+							/>
+						</div>
 					</DrawerDescription>
 				</DrawerHeader>
 				<DrawerFooter>
-					<Button>Submit</Button>
 					<DrawerClose>
-						<Button variant="outline">Cancel</Button>
+						<Button size="lg" className="bg-white text-orange-400 ">
+							Back to board
+						</Button>
 					</DrawerClose>
 				</DrawerFooter>
 			</DrawerContent>
