@@ -6,7 +6,6 @@ import { useProgress } from "@react-three/drei";
 import { GameContext } from "@/context/gameContext";
 import { useContext } from "react";
 import MultipleClouds from "@/components/multipleClouds";
-import About from "@/pages/About";
 import Contact from "@/pages/Contact";
 import Controller from "@/pages/Controller";
 import Projects from "@/pages/Projects";
@@ -41,7 +40,6 @@ const RootLayout = () => {
 	}, []);
 
 	const boardComponents: Record<string, ReactElement> = {
-		about: <About />,
 		contact: <Contact />,
 		controller: <Controller />,
 		projects: <Projects />,
@@ -97,7 +95,7 @@ const RootLayout = () => {
 				<>
 					<button
 						onClick={() => setMuted(!muted)}
-						className="absolute top-4 right-4 z-50 bg-white/80 backdrop-blur-sm text-black px-3 py-1 rounded-full shadow-lg hover:bg-white/90 transition-colors duration-300">
+						className="absolute top-4 right-4 z-[5000] bg-white/80 backdrop-blur-sm text-black px-3 py-1 rounded-full shadow-lg hover:bg-white/90 transition-colors duration-300">
 						{muted ? (
 							<Icon icon="wpf:speaker" width="26" height="26" color="#fc045c" />
 						) : (
@@ -105,7 +103,7 @@ const RootLayout = () => {
 								icon="heroicons:speaker-x-mark-20-solid"
 								width="26"
 								height="26"
-								color="#fc045c"
+								color="red"
 							/>
 						)}
 					</button>
@@ -117,7 +115,7 @@ const RootLayout = () => {
 						autoPlay
 						loop
 						muted={muted}
-						className="opacity-0"
+						className="opacity-0 "
 					/>
 				</>
 			)}

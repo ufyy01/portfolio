@@ -19,8 +19,8 @@ interface OpenScreenProps {
 }
 
 const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
-	const [doIknowYou, setDoIknowYou] = useState(false);
-	const [showScrollHint, setShowScrollHint] = useState(true);
+	// const [doIknowYou, setDoIknowYou] = useState(false);
+	const [showScrollHint] = useState(true);
 
 	const gameContext = useContext(GameContext);
 	const loadingTextures = gameContext?.loadingTextures;
@@ -42,7 +42,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 		"/images/cloud1.png",
 	];
 	const containerRef = useRef(null);
-	const introRef = useRef(null);
+	// const introRef = useRef(null);
 	const continuousRef = useRef<HTMLDivElement>(null);
 	const knowRef = useRef<HTMLDivElement>(null);
 
@@ -74,16 +74,16 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 		}
 	}, []);
 
-	const handleSpinIntro = () => {
-		if (introRef.current && rootRef.current) {
-			const tl = gsap.timeline();
-			tl.to(introRef.current, {
-				opacity: 0,
-				duration: 0.6,
-				transformOrigin: "50% 50%",
-			});
-		}
-	};
+	// const handleSpinIntro = () => {
+	// 	if (introRef.current && rootRef.current) {
+	// 		const tl = gsap.timeline();
+	// 		tl.to(introRef.current, {
+	// 			opacity: 0,
+	// 			duration: 0.6,
+	// 			transformOrigin: "50% 50%",
+	// 		});
+	// 	}
+	// };
 
 	const handleSpinKnow = () => {
 		if (knowRef.current && rootRef.current) {
@@ -159,15 +159,15 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 		}
 	}, []);
 
-	useEffect(() => {
-		if (doIknowYou) {
-			setShowScrollHint(true);
-			const timer = setTimeout(() => {
-				setShowScrollHint(false);
-			}, 4000);
-			return () => clearTimeout(timer);
-		}
-	}, [doIknowYou]);
+	// useEffect(() => {
+	// 	if (doIknowYou) {
+	// 		setShowScrollHint(true);
+	// 		const timer = setTimeout(() => {
+	// 			setShowScrollHint(false);
+	// 		}, 4000);
+	// 		return () => clearTimeout(timer);
+	// 	}
+	// }, [doIknowYou]);
 
 	return (
 		<div
@@ -199,7 +199,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 			<div
 				className="px-5 py-8 bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg  w-11/12 lg:w-7/12 2xl:w-1/3 mx-auto h-8/12 md:h-fit text-white pb-5"
 				ref={knowRef}>
-				{!doIknowYou && (
+				{/* {!doIknowYou && (
 					<div
 						ref={introRef}
 						className="space-y-4 overflow-y-scroll md:overflow-hidden text-pretty h-full w-full">
@@ -259,91 +259,88 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 							</Button>
 						</div>
 					</div>
-				)}
-				{doIknowYou && (
-					<div className="space-y-4 overflow-y-scroll md:overflow-hidden text-pretty w-full h-full">
-						<p className="font-fraunces italic text-4xl text-orange-200 text-center">
-							Can I know you?
-						</p>
-						<p className="w-11/12 mx-auto text-center md:text-start">
-							I’m{" "}
-							<span className="font-fraunces text-accent italic text-lg">
-								Ufuoma
-							</span>
-							, a frontend-focused developer with a soft spot for storytelling,
-							interactivity, and joyful user experiences. I don’t just build
-							projects... I build experiences that resonate, connect, and
-							inspire.
-						</p>
-						<p className="w-11/12 mx-auto text-center md:text-start">
-							Thank you for visiting my little corner of the internet! I’m
-							thrilled to have you here. <br />
-						</p>
+				)} */}
+				<div className="space-y-4 overflow-y-scroll md:overflow-hidden text-pretty w-full h-full">
+					<p className="font-fraunces italic text-4xl text-orange-200 text-center">
+						Welcome! Can I know you?
+					</p>
+					<p className="w-11/12 mx-auto text-center md:text-start">
+						I’m{" "}
+						<span className="font-fraunces text-accent italic text-lg">
+							Ufuoma
+						</span>
+						, a frontend-focused developer with a soft spot for storytelling,
+						interactivity, and joyful user experiences. I don’t just build
+						projects... I build experiences that resonate, connect, and inspire.
+					</p>
+					<p className="w-11/12 mx-auto text-center md:text-start">
+						Thank you for visiting my little corner of the internet! I’m
+						thrilled to have you here. <br />
+					</p>
 
-						<p className="w-11/12 mx-auto text-center md:text-start">
-							I'll love to look my best to make your visit worthwhile. <br />{" "}
-							Select the option that best describes you 👇🏾
-						</p>
+					<p className="w-11/12 mx-auto text-center md:text-start">
+						I'll love to look my best to make your visit worthwhile. <br />{" "}
+						Select the option that best describes you 👇🏾
+					</p>
 
-						<div className="w-full flex flex-col items-center space-y-4">
-							<Button
-								className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
-									visitorType === "recruiter"
-										? "bg-blue-500 text-white"
-										: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
-								}`}
-								onClick={() => setVisitorType!("recruiter")}>
-								Recruiter
-							</Button>
-							<Button
-								className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
-									visitorType === "developer"
-										? "bg-blue-500 text-white"
-										: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
-								}`}
-								onClick={() => setVisitorType!("developer")}>
-								Developer
-							</Button>
-							<Button
-								className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
-									visitorType === "other"
-										? "bg-blue-500 text-white"
-										: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
-								}`}
-								onClick={() => setVisitorType!("other")}>
-								Casual visitor
-							</Button>
-						</div>
-
-						<div className="flex justify-center">
-							<Button
-								size="lg"
-								className="bg-white relative z-[200] disabled:opacity-50 disabled:cursor-not-allowed"
-								onClick={() => {
-									handleSpinKnow();
-									setTimeout(() => {
-										if (rootRef.current) {
-											setPlaying(true);
-										}
-									}, 500);
-								}}
-								disabled={loadingTextures && progress < 100}>
-								<Icon
-									icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-									width="50"
-									height="50"
-									color="#fc045c"
-									className="w-12 h-12 mr-2"
-								/>
-								<p className="font-fraunces italic text-2xl text-[#fc045c]">
-									{loadingTextures && progress < 100
-										? `Loading... ${Math.round(progress)}%`
-										: "Ready to explore?"}
-								</p>
-							</Button>
-						</div>
+					<div className="w-full flex flex-col items-center space-y-4">
+						<Button
+							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
+								visitorType === "recruiter"
+									? "bg-blue-500 text-white"
+									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
+							}`}
+							onClick={() => setVisitorType!("recruiter")}>
+							Recruiter
+						</Button>
+						<Button
+							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
+								visitorType === "developer"
+									? "bg-blue-500 text-white"
+									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
+							}`}
+							onClick={() => setVisitorType!("developer")}>
+							Developer
+						</Button>
+						<Button
+							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
+								visitorType === "other"
+									? "bg-blue-500 text-white"
+									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
+							}`}
+							onClick={() => setVisitorType!("other")}>
+							Casual visitor
+						</Button>
 					</div>
-				)}
+
+					<div className="flex justify-center">
+						<Button
+							size="lg"
+							className="bg-white relative z-[200] disabled:opacity-50 disabled:cursor-not-allowed"
+							onClick={() => {
+								handleSpinKnow();
+								setTimeout(() => {
+									if (rootRef.current) {
+										setPlaying(true);
+									}
+								}, 500);
+							}}
+							disabled={loadingTextures && progress < 100}>
+							<Icon
+								icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
+								width="50"
+								height="50"
+								color="#fc045c"
+								className="w-12 h-12 mr-2"
+							/>
+							<p className="font-fraunces italic text-2xl text-[#fc045c]">
+								{loadingTextures && progress < 100
+									? `Loading... ${Math.round(progress)}%`
+									: "Ready to explore?"}
+							</p>
+						</Button>
+					</div>
+				</div>
 				{showScrollHint && (
 					<div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 md:hidden z-50 animate-bounce text-[#fc045c] text-sm text-center ">
 						<Icon

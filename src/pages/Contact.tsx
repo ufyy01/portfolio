@@ -26,11 +26,11 @@ const Contact = () => {
 
 	return (
 		<Drawer open={showMore} onOpenChange={setShowMore}>
-			<DrawerContent className="z-[2000] bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg w-screen md:w-8/12 overflow-hidden overflow-y-auto lg:overflow-y-hidden md:h-fit  pb-5 after:hidden ">
+			<DrawerContent className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12 overflow-hidden overflow-y-auto lg:overflow-y-hidden md:h-fit pb-5">
 				<DrawerHeader>
 					<DrawerTitle className=""></DrawerTitle>
 					<DrawerDescription className="w-11/12 flex flex-col md:flex-row mx-auto gap-5 text-white text-start">
-						<div className="lg:w-1/3  ">
+						<div className="lg:w-1/2  ">
 							<div className="text-lg">
 								<p className="text-start font-fraunces italic text-orange-400 mt-10 text-3xl md:text-5xl">
 									Let's talk
@@ -73,7 +73,7 @@ const Contact = () => {
 								</div>
 							</div>
 						</div>
-						<div className="lg:w-2/3 mt-5">
+						<div className="lg:w-1/2 mt-5">
 							<img
 								src="/images/ufuoma_contact_qr.png"
 								alt="Contact QR Code"

@@ -70,6 +70,17 @@ const CloudPopup = () => {
 		`<p>What music do you like to listen to?</p>`,
 	];
 
+	const techStackMessage = [
+		`<p>I love working with React, TypeScript, and Node.js.</p>`,
+		`<p>My favorite tools include VSCode, Git, and Figma.</p>
+    <p>I enjoy building scalable and efficient web applications.</p>`,
+		`<p>I'm passionate about learning new technologies and improving my skills.</p>`,
+		`<p>My favorite libraries are React and Tailwind CSS.</p>`,
+		`<p>I love using Next.js for building server-rendered React applications.</p>`,
+		`<p>I'm always exploring new frameworks and libraries to enhance my development process.</p>
+    <p>What technologies do you enjoy working with?</p>`,
+	];
+
 	const message = [
 		{
 			name: "default",
@@ -102,7 +113,7 @@ const CloudPopup = () => {
 		{
 			name: "about",
 			title: "About Me",
-			text: `<p>Hi, I'm Ufuoma! I'm passionate about creating engaging and interactive experiences. In this game, you'll get to roll the dice and embark on an exciting adventure.</p>`,
+			text: `<p>Hi, I'm Ufuoma! I'm a software developer passionate about creating engaging and interactive experiences.  </p>`,
 		},
 		{
 			name: "gameOver",
@@ -111,8 +122,10 @@ const CloudPopup = () => {
 		},
 		{
 			name: "laptop",
-			title: "Laptop",
-			text: `<p>Here's a glimpse of my laptop setup. It's where I bring my ideas to life!</p>`,
+			title: "Tech Stack",
+			text: techStackMessage[
+				Math.floor(Math.random() * techStackMessage.length)
+			],
 		},
 		{
 			name: "skills",
@@ -132,7 +145,9 @@ const CloudPopup = () => {
 		{
 			name: "headset",
 			title: "Music",
-			text: headsetMessage[Math.floor(Math.random() * headsetMessage.length)],
+			text:
+				headsetMessage[Math.floor(Math.random() * headsetMessage.length)] +
+				`\n <p>Special thanks to <strong>The Kazez</strong> for the background music!</p>`,
 		},
 		{
 			name: "contact",
@@ -146,8 +161,8 @@ const CloudPopup = () => {
 		},
 		{
 			name: "controller",
-			title: "Controller",
-			text: `<p>This controller is perfect for gaming and navigating through interactive experiences.</p>`,
+			title: "Game Break!",
+			text: `<p>Pause to play some of my favorite games or continue your journey through the board!</p>`,
 		},
 		{
 			name: "resume",
@@ -166,7 +181,7 @@ const CloudPopup = () => {
 	return (
 		<div
 			ref={popupRef}
-			className="z-[2000] w-screen h-screen fixed top-0 left-0 flex items-end justify-end">
+			className="z-[2000] w-full fixed bottom-0 left-0 flex justify-end">
 			<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
 				<div className="w-9/12 mx-auto space-y-3 h-full">
 					<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20">
@@ -212,13 +227,9 @@ const CloudPopup = () => {
 						</div>
 					)}
 
-					{[
-						"rollAgain",
-						"laptop",
-						"headset",
-						"jumpAhead",
-						"backToStart",
-					].includes(boardName) && (
+					{["about", "laptop", "headset", "jumpAhead", "backToStart"].includes(
+						boardName
+					) && (
 						<div className="flex gap-3 justify-center my-5 flex-wrap">
 							<Button
 								size="lg"
@@ -251,14 +262,9 @@ const CloudPopup = () => {
 						</div>
 					)}
 
-					{[
-						"about",
-						"skills",
-						"projects",
-						"contact",
-						"controller",
-						"resume",
-					].includes(boardName) && (
+					{["skills", "projects", "contact", "controller", "resume"].includes(
+						boardName
+					) && (
 						<div className="flex gap-3 justify-center my-5 flex-wrap">
 							<Button
 								size="lg"
@@ -286,7 +292,7 @@ const CloudPopup = () => {
 									className="w-12 h-12 mr-2"
 								/>
 								<p className="font-fraunces italic text-2xl text-white">
-									Tell me more!
+									Jump To
 								</p>
 							</Button>
 							<Button

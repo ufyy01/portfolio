@@ -51,13 +51,13 @@ const Model = () => {
 	const hasArrivedRef = useRef(false);
 	// --- Move path for sequential ring traversal ---
 	const movePathRef = useRef<number[] | null>(null);
+	const returnRotationRef = useRef<number | null>(null);
 
 	// --- Camera ---
 	// --- Return path for hugging the outer ring ---
 	const returnPathRef = useRef<number[] | null>(null);
 	const { camera } = useThree();
 	const origCamPos = useRef(camera.position.clone());
-	console.log("Original camera position:", origCamPos.current);
 	origCamPos.current.z *= 1;
 	origCamPos.current.x *= 1;
 	const zoomedInPos = useMemo(() => {
@@ -209,10 +209,39 @@ const Model = () => {
 			if (prev === null) {
 				const { position } = meshPosition(boardPosition);
 				targetPos.current.set(position.x, position.y, position.z);
+				// Set initial rotation for first move
+				if ([1, 2, 3].includes(boardPosition)) {
+					meshRef.current!.rotation.y = Math.PI / 2;
+				} else if ([4, 5, 6, 13].includes(boardPosition)) {
+					meshRef.current!.rotation.y = Math.PI;
+				} else if ([7, 8, 9].includes(boardPosition)) {
+					meshRef.current!.rotation.y = -Math.PI / 2;
+				} else {
+					meshRef.current!.rotation.y = 0;
+				}
 				return;
 			}
-			// only start a movement when this is not the initial mount
-			if (prev !== null) {
+			// --- Return path override: control rotation for return path (defeated animation) ---
+			if (
+				returnPathRef.current &&
+				returnPathRef.current.length >= 0 &&
+				[5, 6].includes(boardPosition) &&
+				returnRotationRef.current !== null
+			) {
+				meshRef.current!.rotation.y = returnRotationRef.current;
+			} else if (
+				returnPathRef.current &&
+				returnPathRef.current.length >= 0 &&
+				boardPosition === 4
+			) {
+				meshRef.current!.rotation.y = returnRotationRef.current ?? Math.PI;
+			} else if (
+				returnPathRef.current &&
+				returnPathRef.current.length >= 0 &&
+				[0, 1, 2, 3].includes(boardPosition)
+			) {
+				meshRef.current!.rotation.y = -Math.PI / 2;
+			} else if (prev !== null) {
 				isMovingRef.current = true;
 				// update new target
 				const { position } = meshPosition(boardPosition);
@@ -241,9 +270,24 @@ const Model = () => {
 				}
 				setAnimation("Walk");
 				setIsWalking?.(true);
+				// Reset camera to front of model on new position
+				if (meshRef.current) {
+					const modelPos = meshRef.current.position.clone();
+					// Smoothly tween camera to in front of the model
+					gsap.to(camera.position, {
+						x: modelPos.x,
+						y: modelPos.y + 1.5,
+						z: modelPos.z + 5,
+						duration: 1.5,
+						ease: "power2.inOut",
+						onUpdate: () => {
+							camera.lookAt(modelPos);
+						},
+					});
+				}
 			}
 		}
-	}, [boardPosition, setBoardName, setIsWalking]);
+	}, [boardPosition, setBoardName, setIsWalking, camera]);
 
 	// --- Animation: ensure no walking plays on initial load ---
 	useEffect(() => {
@@ -370,7 +414,7 @@ const Model = () => {
 
 	// --- Smooth movement & arrival detection ---
 	const walkSpeed = 1.2;
-	const rotationLerpSpeed = 5.0; // higher value = faster rotation alignment
+	// const rotationLerpSpeed = 5.0;
 
 	useFrame((_, delta) => {
 		if (!meshRef.current) return;
@@ -449,24 +493,24 @@ const Model = () => {
 				// If close, snap exactly
 				current.copy(targetPos.current);
 			}
-			const isReturning =
-				returnPathRef.current && returnPathRef.current.length > 0;
-			if (!isReturning) {
-				// Smoothly interpolate rotation toward movement direction
-				const angle = Math.atan2(-direction.z, direction.x) + Math.PI / 2;
-				const currentY = meshRef.current!.rotation.y;
-				const newY = THREE.MathUtils.lerp(
-					currentY,
-					angle,
-					Math.min(1, rotationLerpSpeed * delta)
-				);
-				meshRef.current!.rotation.y = newY;
-			}
 		}
 		smoothFollow();
 	});
 
 	// --- Arrival logic ---
+	// --- Extracted to avoid no-case-declarations warning ---
+	const startReturnPath = () => {
+		returnPathRef.current = [5, 4, 3, 2, 1, 0];
+		if (meshRef.current) {
+			returnRotationRef.current = meshRef.current.rotation.y;
+		}
+		const nextPos = returnPathRef.current.shift()!;
+		setBoardPosition!(nextPos);
+		const { position: newPos } = meshPosition(nextPos);
+		targetPos.current.set(newPos.x, newPos.y, newPos.z);
+		isMovingRef.current = true;
+	};
+
 	function triggerArrival(pos?: number) {
 		// If a move path is in progress, continue sequential traversal
 		if (movePathRef.current && movePathRef.current.length > 0) {
@@ -527,27 +571,13 @@ const Model = () => {
 				if (actions["Defeated"]) {
 					const clip = actions["Defeated"].getClip();
 					arrivalTimeoutRef.current = setTimeout(() => {
-						// Initialize return path hugging the outer ring
-						returnPathRef.current = [5, 4, 3, 2, 1, 0];
-						const nextPos = returnPathRef.current.shift()!;
-						setBoardPosition!(nextPos);
-						const { position: newPos } = meshPosition(nextPos);
-						targetPos.current.set(newPos.x, newPos.y, newPos.z);
-						isMovingRef.current = true;
-						// meshRef.current!.rotation.y = -Math.PI / 2; // face forward instead of backward
-						// Do not setAnimation("Walk") here; let normal movement logic play Walk continuously
-					}, clip.duration * 1000);
+						startReturnPath();
+					}, clip.duration * 800);
 				} else {
 					// Fallback timing
 					arrivalTimeoutRef.current = setTimeout(() => {
-						returnPathRef.current = [5, 4, 3, 2, 1, 0];
-						const nextPos = returnPathRef.current.shift()!;
-						setBoardPosition!(nextPos);
-						const { position: newPos } = meshPosition(nextPos);
-						targetPos.current.set(newPos.x, newPos.y, newPos.z);
-						isMovingRef.current = true;
-						// meshRef.current!.rotation.y = 0;
-					}, 1000);
+						startReturnPath();
+					}, 800);
 				}
 				break;
 			case 7:
