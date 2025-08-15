@@ -151,6 +151,7 @@ const EndModal = () => {
 									{" "}
 									<a
 										href="https://music.apple.com/ng/artist/the-kazez/1471408685"
+										target="_blank"
 										className="underline">
 										The Kazez
 									</a>
@@ -161,7 +162,10 @@ const EndModal = () => {
 								Credit to{" "}
 								<strong>
 									{" "}
-									<a href="https://readyplayer.me" className="underline">
+									<a
+										href="https://readyplayer.me"
+										target="_blank"
+										className="underline">
 										Ready Player Me
 									</a>
 								</strong>{" "}

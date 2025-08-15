@@ -195,7 +195,7 @@ const CloudPopup = () => {
 			title: "Music",
 			text:
 				headsetMessage[Math.floor(Math.random() * headsetMessage.length)] +
-				`\n <p>Special thanks to <strong> <a href="https://music.apple.com/ng/artist/the-kazez/1471408685" class="underline">The Kazez</a></strong> for the background music!</p>`,
+				`\n <p>Special thanks to <strong> <a href="https://music.apple.com/ng/artist/the-kazez/1471408685" target="_blank" class="underline">The Kazez</a></strong> for the background music!</p>`,
 		},
 		{
 			name: "contact",
