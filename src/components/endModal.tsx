@@ -145,6 +145,20 @@ const EndModal = () => {
 									Play Again!
 								</p>
 							</Button>
+							<p>
+								Thank you to{" "}
+								<strong>
+									{" "}
+									<a href="https://music.apple.com/ng/artist/the-kazez/1471408685">
+										The Kazez
+									</a>
+								</strong>{" "}
+								for the background music!
+							</p>
+							<p>
+								Credit to <a href="https://readyplayer.me/">Ready Player Me</a>{" "}
+								for the avatar assets, saved me a lot of time!
+							</p>
 						</div>
 					</div>
 				</div>
