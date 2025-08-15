@@ -337,7 +337,7 @@ const Model = () => {
 				[0, 1, 2, 3].includes(boardPosition)
 			) {
 				meshRef.current!.rotation.y = -Math.PI / 2;
-			} else if (prev !== null) {
+			} else {
 				isMovingRef.current = true;
 				// update new target
 				const { position } = meshPosition(boardPosition);
