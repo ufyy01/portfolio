@@ -1,6 +1,6 @@
 import { GameContext } from "@/context/gameContext";
 import { Button } from "./ui/button";
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { useIsMobile } from "@/lib/useMoble";
@@ -16,12 +16,44 @@ const CloudPopup = () => {
 
 	const popupRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		gsap.fromTo(
-			popupRef.current,
-			{ x: "100%", opacity: 0 },
-			{ x: "0%", opacity: 1, duration: 1 }
-		);
+	const [bgLoaded, setBgLoaded] = useState(false);
+
+	useLayoutEffect(() => {
+		const ctx = gsap.context(() => {
+			const animateIn = () => {
+				if (!popupRef.current) return;
+				gsap.set(popupRef.current, {
+					xPercent: 100,
+					autoAlpha: 0,
+					force3D: true,
+				});
+				gsap.to(popupRef.current, {
+					xPercent: 0,
+					autoAlpha: 1,
+					duration: 0.6,
+					ease: "power3.out",
+				});
+			};
+
+			// Preload the background image before showing/animating the popup
+			const img = new Image();
+			img.src = "/images/cloudPop.png";
+			if (img.complete) {
+				setBgLoaded(true);
+				animateIn();
+			} else {
+				img.onload = () => {
+					setBgLoaded(true);
+					animateIn();
+				};
+				img.onerror = () => {
+					// Even if it fails, proceed so the UI isn't blocked
+					setBgLoaded(true);
+					animateIn();
+				};
+			}
+		}, popupRef);
+		return () => ctx.revert();
 	}, []);
 
 	const setShowCloudPopup = gameContext?.setShowCloudPopup;
@@ -142,7 +174,7 @@ const CloudPopup = () => {
 			title: "Music",
 			text:
 				headsetMessage[Math.floor(Math.random() * headsetMessage.length)] +
-				`\n <p>Special thanks to <strong> <a href="https://music.apple.com/ng/artist/the-kazez/1471408685">The Kazez</a></strong> for the background music!</p>`,
+				`\n <p>Special thanks to <strong> <a href="https://music.apple.com/ng/artist/the-kazez/1471408685" className="underline">The Kazez</a></strong> for the background music!</p>`,
 		},
 		{
 			name: "contact",
@@ -171,7 +203,8 @@ const CloudPopup = () => {
 	return (
 		<div
 			ref={popupRef}
-			className="z-[2000] w-full lg:w-6/12 fixed bottom-0 right-0">
+			style={{ visibility: bgLoaded ? "visible" : "hidden" }}
+			className="z-[2000] w-full lg:w-6/12 fixed bottom-0 right-0 will-change-transform transform-gpu">
 			<div className=" w-full  text-lg  bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative">
 				<div className="w-9/12 mx-auto space-y-3 h-full">
 					<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20">
@@ -189,8 +222,8 @@ const CloudPopup = () => {
 								onClick={() => {
 									if (popupRef.current) {
 										gsap.to(popupRef.current, {
-											x: "100%",
-											opacity: 0,
+											xPercent: 100,
+											autoAlpha: 0,
 											duration: 0.5,
 											ease: "power2.in",
 											onComplete: () => {
@@ -228,8 +261,8 @@ const CloudPopup = () => {
 								onClick={() => {
 									if (popupRef.current) {
 										gsap.to(popupRef.current, {
-											x: "100%",
-											opacity: 0,
+											xPercent: 100,
+											autoAlpha: 0,
 											duration: 0.5,
 											ease: "power2.in",
 											onComplete: () => {
@@ -263,8 +296,8 @@ const CloudPopup = () => {
 								onClick={() => {
 									if (popupRef.current) {
 										gsap.to(popupRef.current, {
-											x: "100%",
-											opacity: 0,
+											xPercent: 100,
+											autoAlpha: 0,
 											duration: 0.5,
 											ease: "power2.in",
 											onComplete: () => {
@@ -292,8 +325,8 @@ const CloudPopup = () => {
 								onClick={() => {
 									if (popupRef.current) {
 										gsap.to(popupRef.current, {
-											x: "100%",
-											opacity: 0,
+											xPercent: 100,
+											autoAlpha: 0,
 											duration: 0.2,
 											ease: "power2.in",
 											onComplete: () => {

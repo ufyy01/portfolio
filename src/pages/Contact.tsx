@@ -26,7 +26,9 @@ const Contact = () => {
 
 	return (
 		<Drawer open={showMore} onOpenChange={setShowMore}>
-			<DrawerContent className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12  pb-5 overflow-hidden overflow-y-auto after:hidden">
+			<DrawerContent
+				className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12 pb-5 max-h-[85svh] h-[85svh] md:h-auto overflow-y-auto overscroll-contain touch-pan-y after:hidden"
+				style={{ WebkitOverflowScrolling: "touch" }}>
 				<DrawerHeader>
 					<DrawerTitle className=""></DrawerTitle>
 					<DrawerDescription className="w-11/12 flex flex-col md:flex-row mx-auto gap-5 text-white text-start">
