@@ -1,0 +1,154 @@
+import { GameContext } from "@/context/gameContext";
+import { useContext, useEffect, useRef, useState } from "react";
+import { Button } from "./ui/button";
+import { Icon } from "@iconify/react/dist/iconify.js";
+import gsap from "gsap";
+
+const EndModal = () => {
+	const gameContext = useContext(GameContext);
+	const boardName = gameContext?.boardName;
+	const setBoardPosition = gameContext?.setBoardPosition;
+	const [showModal, setShowModal] = useState(false);
+
+	const jumpToBoardPosition = (position: number | "default") => {
+		setBoardPosition?.(position);
+		setShowModal(false);
+	};
+
+	const popupRef = useRef<HTMLDivElement>(null);
+
+	useEffect(() => {
+		if (popupRef.current) {
+			gsap.fromTo(
+				popupRef.current,
+				{ x: "100%", opacity: 0 },
+				{ x: "0%", opacity: 1, duration: 1, delay: 5 }
+			);
+		}
+	}, []);
+
+	useEffect(() => {
+		if (boardName === "gameOver" || boardName === "special") {
+			setShowModal(true);
+		} else {
+			setShowModal(false);
+		}
+	}, [boardName]);
+
+	return (
+		<>
+			{showModal && (
+				<div
+					ref={popupRef}
+					className="z-[2000] w-full lg:w-6/12 fixed bottom-0 lg:bottom-[30%] lg:left-[25%] flex justify-center items-center">
+					<div className=" w-full text-lg bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top h-full rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
+						<div className="w-9/12 mx-auto space-y-3 h-full text-center mt-5 lg:mt-20 mb-10 text-lg">
+							<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
+								Thank You!
+							</h2>
+							<p>We hope you enjoyed your journey.</p>
+							<p>Feel free to explore more!</p>
+							<div className="flex gap-2 flex-wrap justify-center">
+								<Button
+									size="lg"
+									type="button"
+									className="bg-orange-400 relative z-[200] "
+									onClick={() => {
+										jumpToBoardPosition(4);
+									}}>
+									<Icon
+										icon="ep:info-filled"
+										width="50"
+										height="50"
+										color="white"
+										className="w-12 h-12 mr-2"
+									/>
+									<p className="font-fraunces italic text-2xl text-white">
+										Jump To Skills Section
+									</p>
+								</Button>
+								<Button
+									size="lg"
+									type="button"
+									className="bg-orange-400 relative z-[200] "
+									onClick={() => {
+										jumpToBoardPosition(5);
+									}}>
+									<Icon
+										icon="ep:info-filled"
+										width="50"
+										height="50"
+										color="white"
+										className="w-12 h-12 mr-2"
+									/>
+									<p className="font-fraunces italic text-2xl text-white">
+										Jump To Projects Section
+									</p>
+								</Button>
+								<Button
+									size="lg"
+									type="button"
+									className="bg-orange-400 relative z-[200] "
+									onClick={() => {
+										jumpToBoardPosition(8);
+									}}>
+									<Icon
+										icon="ep:info-filled"
+										width="50"
+										height="50"
+										color="white"
+										className="w-12 h-12 mr-2"
+									/>
+									<p className="font-fraunces italic text-2xl text-white">
+										Jump To Contact Section
+									</p>
+								</Button>
+								<Button
+									size="lg"
+									type="button"
+									className="bg-orange-400 relative z-[200] "
+									onClick={() => {
+										jumpToBoardPosition(11);
+									}}>
+									<Icon
+										icon="ep:info-filled"
+										width="50"
+										height="50"
+										color="white"
+										className="w-12 h-12 mr-2"
+									/>
+									<p className="font-fraunces italic text-2xl text-white">
+										Jump To Resume Section
+									</p>
+								</Button>
+							</div>
+							<p className="font-fraunces italic text-2xl text-orange-400 my-5">
+								Thank you for your time!
+							</p>
+							<Button
+								size="lg"
+								type="button"
+								className="bg-[#fc045c] relative z-[200] lg:w-6/12 "
+								onClick={() => {
+									jumpToBoardPosition("default");
+								}}>
+								<Icon
+									icon="ep:info-filled"
+									width="50"
+									height="50"
+									color="white"
+									className="w-12 h-12 mr-2"
+								/>
+								<p className="font-fraunces italic text-2xl text-white">
+									Play Again!
+								</p>
+							</Button>
+						</div>
+					</div>
+				</div>
+			)}
+		</>
+	);
+};
+
+export default EndModal;

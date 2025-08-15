@@ -1,7 +1,39 @@
 import { useState, useRef, useEffect } from "react";
+import { Button } from "./ui/button";
 
-const GRID_SIZE = 6;
-const HIDDEN_WORDS = ["code", "love", "post", "soft"];
+const GRID_SIZE = 10;
+const HIDDEN_WORDS = [
+	"node",
+	"next",
+	"repo",
+	"auth",
+	"json",
+	"ajax",
+	"java",
+	"html",
+	"sass",
+	"less",
+	"bash",
+	"yarn",
+	"http",
+	"unix",
+	"test",
+	"mock",
+	"jest",
+	"expo",
+	"drei",
+	"gsap",
+	"vite",
+	"rest",
+	"soap",
+	"grpc",
+	"yaml",
+	"apis",
+	"hook",
+	"view",
+	"page",
+	"save",
+];
 
 type Cell = {
 	letter: string;
@@ -79,28 +111,50 @@ const createGrid = (): Cell[][] => {
 	return finalGrid;
 };
 
-const areAdjacent = (a: [number, number], b: [number, number]) => {
-	const [r1, c1] = a;
-	const [r2, c2] = b;
-	// Only allow moves one cell up, down, left, or right (no diagonals)
-	return (
-		(Math.abs(r1 - r2) === 1 && c1 === c2) ||
-		(Math.abs(c1 - c2) === 1 && r1 === r2)
-	);
+// Fills in any skipped cells between the last selected cell and the current hover/touch cell
+// Only supports straight lines (same row or same column)
+function extendPathStraight(
+	prev: [number, number][],
+	targetRow: number,
+	targetCol: number
+) {
+	if (prev.length === 0) return prev;
+	const [lr, lc] = prev[prev.length - 1];
+
+	// Must remain straight (no diagonals)
+	if (lr !== targetRow && lc !== targetCol) return prev;
+
+	const next = [...prev];
+
+	if (lr === targetRow && lc !== targetCol) {
+		const dir = targetCol > lc ? 1 : -1;
+		for (let c = lc + dir; c !== targetCol + dir; c += dir) {
+			const step: [number, number] = [lr, c];
+			if (!next.some(([r, cc]) => r === step[0] && cc === step[1]))
+				next.push(step);
+		}
+	} else if (lc === targetCol && lr !== targetRow) {
+		const dir = targetRow > lr ? 1 : -1;
+		for (let r = lr + dir; r !== targetRow + dir; r += dir) {
+			const step: [number, number] = [r, lc];
+			if (!next.some(([rr, c]) => rr === step[0] && c === step[1]))
+				next.push(step);
+		}
+	}
+	return next;
+}
+
+type WordShuffleProps = {
+	setGame: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
-const WordShuffle = () => {
+const WordShuffle = ({ setGame }: WordShuffleProps) => {
 	const [grid, setGrid] = useState<Cell[][]>(createGrid);
 	const [selectedPath, setSelectedPath] = useState<[number, number][]>([]);
 	const [foundWords, setFoundWords] = useState<string[]>([]);
-	useEffect(() => {
-		if (selectedPath.length > 0) {
-			const letters = selectedPath.map(([r, c]) => grid[r][c].letter);
-			console.log("Selected letters:", letters);
-		}
-	}, [selectedPath, grid]);
-	const [timeLeft, setTimeLeft] = useState(60);
-	const [score, setScore] = useState(0);
+	const [isMouseDown, setIsMouseDown] = useState(false);
+
+	const [timeLeft, setTimeLeft] = useState(80);
 	const [gameOver, setGameOver] = useState(false);
 	const gridRef = useRef<HTMLDivElement | null>(null);
 
@@ -108,12 +162,12 @@ const WordShuffle = () => {
 		setGrid(createGrid());
 		setSelectedPath([]);
 		setFoundWords([]);
-		setTimeLeft(60);
-		setScore(0);
+		setTimeLeft(80);
 		setGameOver(false);
 	};
 
 	useEffect(() => {
+		if (gameOver) return;
 		if (timeLeft <= 0) {
 			setGameOver(true);
 			return;
@@ -122,15 +176,16 @@ const WordShuffle = () => {
 			setTimeLeft((prev) => prev - 1);
 		}, 1000);
 		return () => clearInterval(timer);
-	}, [timeLeft]);
+	}, [timeLeft, gameOver]);
 
 	const handleMouseDown = (row: number, col: number) => {
 		if (gameOver) return;
+		setIsMouseDown(true);
 		setSelectedPath([[row, col]]);
 	};
 
 	const handleMouseEnter = (row: number, col: number) => {
-		if (gameOver) return;
+		if (gameOver || !isMouseDown) return;
 		setSelectedPath((prev) => {
 			if (!prev.some(([r, c]) => r === row && c === col)) {
 				return [...prev, [row, col]];
@@ -141,6 +196,7 @@ const WordShuffle = () => {
 
 	const handleMouseUp = () => {
 		if (gameOver) return;
+		setIsMouseDown(false);
 
 		const word = selectedPath
 			.map(([r, c]) => grid[r][c].letter)
@@ -149,7 +205,6 @@ const WordShuffle = () => {
 
 		if (HIDDEN_WORDS.includes(word) && !foundWords.includes(word)) {
 			setFoundWords([...foundWords, word]);
-			setScore((prev) => prev + 10);
 			// Mark each selected cell as found
 			setGrid((prevGrid) =>
 				prevGrid.map((row) =>
@@ -165,57 +220,138 @@ const WordShuffle = () => {
 		setSelectedPath([]);
 	};
 
+	useEffect(() => {
+		if (!isMouseDown) return;
+		const onUp = () => {
+			setIsMouseDown(false);
+			handleMouseUp();
+		};
+		window.addEventListener("mouseup", onUp);
+		window.addEventListener("touchend", onUp);
+		return () => {
+			window.removeEventListener("mouseup", onUp);
+			window.removeEventListener("touchend", onUp);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isMouseDown]);
+
+	useEffect(() => {
+		if (foundWords.length === HIDDEN_WORDS.length) {
+			setGameOver(true);
+		}
+	}, [foundWords]);
+
+	const allFound = foundWords.length === HIDDEN_WORDS.length;
+
 	return (
-		<div className="flex flex-col items-center justify-center  p-6">
-			<div className="flex gap-6 mb-4 text-lg font-medium">
-				<span>⏱ Time: {timeLeft}s</span>
-				<span>⭐ Score: {score}</span>
-			</div>
-			<h3 className="text-2xl font-semibold mb-4">Find the hidden words!</h3>
-			<div
-				ref={gridRef}
-				className="grid grid-cols-6 gap-2 bg-white p-4 rounded shadow-md"
-				// onMouseLeave={() => setSelectedPath([])}
-				onMouseUp={handleMouseUp}
-				onTouchEnd={handleMouseUp}
-				onTouchMove={(e) => {
-					if (!gridRef.current) return;
+		<div className="fixed inset-0 z-[2000] bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
+			<div className="z-[2500]">
+				<div className="w-full max-w-3xl flex items-center justify-between px-4 my-5">
+					<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
+						Word Shuffle
+					</h2>
+					<div className="flex items-center gap-3">
+						<span
+							className={`px-3 py-1 rounded-md text-white ${
+								timeLeft <= 15
+									? "bg-red-500"
+									: timeLeft <= 60
+									? "bg-yellow-500"
+									: "bg-emerald-600"
+							}`}>
+							⏱ {timeLeft}
+						</span>
+						<span className="px-3 py-1 rounded-md bg-slate-800 text-white">
+							Found: {foundWords.length}/{HIDDEN_WORDS.length}
+						</span>
+						<span className="px-3 py-1 rounded-md bg-slate-700 text-white">
+							Left: {HIDDEN_WORDS.length - foundWords.length}
+						</span>
+						<button
+							onClick={resetGame}
+							className="px-3 py-1 rounded-md bg-[#fc045c] text-white hover:bg-slate-700 transition">
+							Restart
+						</button>
+					</div>
+				</div>
+				<div>
+					<h3 className="text-2xl font-fraunces text-white font-semibold mb-2">
+						Find the hidden words!
+					</h3>
+					<p className="text-lg text-white mb-4">
+						Click and hold, then drag across adjacent letters
+						(up/down/left/right). Release to submit the word.
+					</p>
 
-					if (selectedPath.length === 0) return;
+					<div
+						ref={gridRef}
+						className="relative z-50 grid gap-2 bg-white p-4 rounded shadow-md touch-none overscroll-contain select-none aspect-square w-full max-w-[min(90vmin,700px)]"
+						style={{
+							gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0,1fr))`,
+							gridTemplateRows: `repeat(${GRID_SIZE}, minmax(0,1fr))`,
+						}}
+						onMouseLeave={() => setIsMouseDown(false)}
+						onMouseUp={handleMouseUp}
+						onMouseMove={(e) => {
+							if (!gridRef.current || !isMouseDown) return;
+							if (selectedPath.length === 0) return;
 
-					const touch = e.touches[0];
-					const rect = gridRef.current.getBoundingClientRect();
-					const cellWidth = rect.width / GRID_SIZE;
-					const cellHeight = rect.height / GRID_SIZE;
+							const rect = gridRef.current.getBoundingClientRect();
+							const cellWidth = rect.width / GRID_SIZE;
+							const cellHeight = rect.height / GRID_SIZE;
 
-					const x = touch.clientX - rect.left;
-					const y = touch.clientY - rect.top;
+							const x = e.clientX - rect.left;
+							const y = e.clientY - rect.top;
 
-					const col = Math.floor(x / cellWidth);
-					const row = Math.floor(y / cellHeight);
+							const col = Math.floor(x / cellWidth);
+							const row = Math.floor(y / cellHeight);
 
-					const last = selectedPath[selectedPath.length - 1];
-					if (
-						row >= 0 &&
-						row < GRID_SIZE &&
-						col >= 0 &&
-						col < GRID_SIZE &&
-						!selectedPath.some(([r, c]) => r === row && c === col) &&
-						areAdjacent(last, [row, col])
-					) {
-						setSelectedPath((prev) => [...prev, [row, col]]);
-					}
-				}}>
-				{grid.map((row) =>
-					row.map((cell) => {
-						const isSelected = selectedPath.some(
-							([r, c]) => r === cell.row && c === cell.col
-						);
-						const isFound = cell.found;
-						return (
-							<div
-								key={`${cell.row}-${cell.col}`}
-								className={`w-12 h-12 flex items-center justify-center text-xl font-bold rounded cursor-pointer select-none border 
+							if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE)
+								return;
+
+							setSelectedPath((prev) => extendPathStraight(prev, row, col));
+						}}
+						onTouchStart={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+						}}
+						onTouchEnd={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							handleMouseUp();
+						}}
+						onTouchMove={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							if (!gridRef.current) return;
+							if (selectedPath.length === 0) return;
+
+							const touch = e.touches[0];
+							const rect = gridRef.current.getBoundingClientRect();
+							const cellWidth = rect.width / GRID_SIZE;
+							const cellHeight = rect.height / GRID_SIZE;
+
+							const x = touch.clientX - rect.left;
+							const y = touch.clientY - rect.top;
+
+							const col = Math.floor(x / cellWidth);
+							const row = Math.floor(y / cellHeight);
+
+							if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE)
+								return;
+
+							setSelectedPath((prev) => extendPathStraight(prev, row, col));
+						}}>
+						{grid.map((row) =>
+							row.map((cell) => {
+								const isSelected = selectedPath.some(
+									([r, c]) => r === cell.row && c === cell.col
+								);
+								const isFound = cell.found;
+								return (
+									<div
+										key={`${cell.row}-${cell.col}`}
+										className={`w-full aspect-square flex items-center justify-center text-xl md:text-2xl font-bold rounded cursor-pointer select-none border 
         ${
 					isFound
 						? "bg-green-300 text-white"
@@ -224,37 +360,49 @@ const WordShuffle = () => {
 						: "bg-white"
 				} 
         ${!isFound ? "hover:bg-blue-50" : ""}`}
-								onMouseDown={() => handleMouseDown(cell.row, cell.col)}
-								onMouseEnter={() => handleMouseEnter(cell.row, cell.col)}
-								onTouchStart={() => handleMouseDown(cell.row, cell.col)}>
-								{cell.letter}
-							</div>
-						);
-					})
-				)}
+										onMouseDown={(e) => {
+											e.preventDefault();
+											e.stopPropagation();
+											handleMouseDown(cell.row, cell.col);
+										}}
+										onMouseEnter={() => handleMouseEnter(cell.row, cell.col)}
+										onTouchStart={() => handleMouseDown(cell.row, cell.col)}>
+										{cell.letter}
+									</div>
+								);
+							})
+						)}
+					</div>
+				</div>
 			</div>
 
 			{gameOver && (
-				<>
-					<p className="mt-4 text-red-500 font-semibold">
-						⏳ Time's up! Final Score: {score}
-					</p>
-					<button
-						className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-						onClick={resetGame}>
-						🔁 Play Again
-					</button>
-				</>
+				<div className="fixed inset-0 z-[3000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+					<div className="bg-white rounded-xl p-6 w-full max-w-md text-center shadow-xl">
+						<div className="text-5xl mb-2">{allFound ? "🎉" : "⏰"}</div>
+						<h3 className="text-2xl font-semibold mb-2 font-fraunces italic text-orange-400">
+							{allFound ? "You solved it!" : "Time's up!"}
+						</h3>
+						<p className="text-slate-600 mb-6">
+							{allFound
+								? `Amazing work — You found all the words!`
+								: "Try again and beat the clock."}
+						</p>
+						<Button
+							size="lg"
+							onClick={resetGame}
+							className="px-4 py-2 rounded-md bg-[#fc045c] font-fraunces italic text-lg text-white hover:bg-slate-700 transition">
+							Play Again
+						</Button>
+						<Button
+							size="lg"
+							onClick={() => setGame(null)}
+							className="px-4 py-2 rounded-md bg-orange-400 font-fraunces italic text-lg text-white hover:bg-slate-700 transition ms-2">
+							Back to Games
+						</Button>
+					</div>
+				</div>
 			)}
-
-			<div className="mt-6 text-center">
-				<p className="font-semibold text-lg mb-2">Found Words:</p>
-				<ul className="space-y-1 text-gray-700">
-					{foundWords.map((word) => (
-						<li key={word}>{word}</li>
-					))}
-				</ul>
-			</div>
 		</div>
 	);
 };

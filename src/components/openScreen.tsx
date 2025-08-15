@@ -269,7 +269,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 						<span className="font-fraunces text-accent italic text-lg">
 							Ufuoma
 						</span>
-						, a frontend-focused developer with a soft spot for storytelling,
+						, a software developer with a soft spot for storytelling,
 						interactivity, and joyful user experiences. I don’t just build
 						projects... I build experiences that resonate, connect, and inspire.
 					</p>
@@ -291,7 +291,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
 							}`}
 							onClick={() => setVisitorType!("recruiter")}>
-							Recruiter
+							I am a recruiter 🕵🏽‍♀️
 						</Button>
 						<Button
 							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
@@ -300,7 +300,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
 							}`}
 							onClick={() => setVisitorType!("developer")}>
-							Developer
+							I am a developer 🧑🏽‍💻
 						</Button>
 						<Button
 							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
@@ -309,7 +309,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
 							}`}
 							onClick={() => setVisitorType!("other")}>
-							Casual visitor
+							I am a casual visitor 🧑🏽‍🤝‍🧑🏽
 						</Button>
 					</div>
 
@@ -336,7 +336,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 							<p className="font-fraunces italic text-2xl text-[#fc045c]">
 								{loadingTextures && progress < 100
 									? `Loading... ${Math.round(progress)}%`
-									: "Ready to explore?"}
+									: "Click here to explore!"}
 							</p>
 						</Button>
 					</div>

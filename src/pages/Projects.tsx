@@ -24,7 +24,7 @@ const Projects = () => {
 
 	return (
 		<Drawer open={showMore} onOpenChange={setShowMore}>
-			<DrawerContent className="z-[2000] py-8 bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg w-screen md:w-8/12 h-8/12 md:h-fit  pb-5 overflow-hidden overflow-y-auto after:hidden">
+			<DrawerContent className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12 h-full pb-5 overflow-hidden overflow-y-auto after:hidden">
 				<DrawerHeader>
 					<DrawerTitle></DrawerTitle>
 					<DrawerDescription className="w-11/12 mx-auto  text-white text-start">
@@ -44,7 +44,11 @@ const Projects = () => {
 							<p className="text-start font-fraunces italic text-[#fc045c] my-10 text-2xl md:text-4xl">
 								Faithlog App
 							</p>
-							{/* <img src="/images/faithlog.png" alt="Faithlog App" className="w-full h-auto rounded-lg mb-4" /> */}
+							<img
+								src="/images/faithlog-welcome.webp"
+								alt="Faithlog App"
+								className="w-[80%] mx-auto h-auto rounded-lg mb-4"
+							/>
 							<p className="text-start my-5 text-lg">
 								The Bible Journal app is a digital platform aimed at helping
 								users engage more deeply with the Bible through personalized
@@ -71,7 +75,7 @@ const Projects = () => {
 								Oya Run!
 							</p>
 							<img
-								src="/images/oya run.PNG"
+								src="/images/oya-run.webp"
 								alt="Oya Run!"
 								className="w-full h-auto rounded-lg"
 							/>
@@ -89,7 +93,7 @@ const Projects = () => {
 								React Native, Expo, Matter.js, TypeScript, Zustand, Procreate,
 								Node.js, Express, MongoDB
 							</p>
-							<Button size="lg" className="bg-[#fc045c] relative z-[200] ">
+							<Button size="lg" className="bg-[#fc045c] relative z-[200] mb-4">
 								<a
 									href="mailto:amazingufy@gmail.com"
 									className="font-fraunces italic text-xl text-white">

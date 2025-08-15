@@ -116,11 +116,6 @@ const CloudPopup = () => {
 			text: `<p>Hi, I'm Ufuoma! I'm a software developer passionate about creating engaging and interactive experiences.  </p>`,
 		},
 		{
-			name: "gameOver",
-			title: "Game Over",
-			text: `<p>Thanks for playing! I hope you enjoyed the game. Feel free to explore more of my work.</p>`,
-		},
-		{
 			name: "laptop",
 			title: "Tech Stack",
 			text: techStackMessage[
@@ -169,11 +164,6 @@ const CloudPopup = () => {
 			title: "Resume",
 			text: `<p>Check out my resume to see my professional journey and accomplishments.</p>`,
 		},
-		{
-			name: "special",
-			title: "Special",
-			text: `<p>This is a special message for you! Keep rolling the dice to discover more.</p>`,
-		},
 	];
 
 	const currentMessage = message.find((msg) => msg.name === boardName);
@@ -182,7 +172,7 @@ const CloudPopup = () => {
 		<div
 			ref={popupRef}
 			className="z-[2000] w-full fixed bottom-0 left-0 flex justify-end">
-			<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
+			<div className=" w-full md:w-6/12 text-lg  bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
 				<div className="w-9/12 mx-auto space-y-3 h-full">
 					<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20">
 						{currentMessage?.title}
@@ -227,7 +217,7 @@ const CloudPopup = () => {
 						</div>
 					)}
 
-					{["about", "laptop", "headset", "jumpAhead", "backToStart"].includes(
+					{["about", "laptop", "headset", "backToStart"].includes(
 						boardName
 					) && (
 						<div className="flex gap-3 justify-center my-5 flex-wrap">

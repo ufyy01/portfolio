@@ -79,6 +79,11 @@ const Contact = () => {
 								alt="Contact QR Code"
 								className="w-full h-auto"
 							/>
+							<Button
+								size="lg"
+								className="bg-[#fc045c] text-white text-lg mt-3 hover:bg-[#fc045c]/80 w-full">
+								Scan me! 👆🏾
+							</Button>
 						</div>
 					</DrawerDescription>
 				</DrawerHeader>

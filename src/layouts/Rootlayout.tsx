@@ -1,5 +1,5 @@
 import { Outlet } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import OpenScreen from "@/components/openScreen";
 import CloudPopup from "@/components/cloudPopup";
 import { useProgress } from "@react-three/drei";
@@ -13,9 +13,12 @@ import Resume from "@/pages/Resume";
 import Skills from "@/pages/Skills";
 import type { ReactElement } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
+import DiceMore from "@/components/diceMore";
+import EndModal from "@/components/endModal";
 
 const RootLayout = () => {
 	const [muted, setMuted] = useState(false);
+	const audioRef = useRef<HTMLAudioElement | null>(null);
 	const gameContext = useContext(GameContext);
 	const showCloudPopup = gameContext?.showCloudPopup || false;
 	const setShowCloudPopup = gameContext?.setShowCloudPopup;
@@ -62,12 +65,17 @@ const RootLayout = () => {
 	}, []);
 
 	useEffect(() => {
+		if (audioRef.current) {
+			audioRef.current.volume = 0.3;
+		}
+	}, [muted]);
+
+	useEffect(() => {
 		if (
 			[
 				"default",
 				"rollAgain",
 				"about",
-				"gameOver",
 				"laptop",
 				"skills",
 				"projects",
@@ -77,12 +85,15 @@ const RootLayout = () => {
 				"jumpAhead",
 				"controller",
 				"resume",
-				"special",
 			].includes(boardName)
 		) {
 			setShowCloudPopup?.(true);
-		} else {
-			setShowCloudPopup?.(false);
+
+			const timeout = setTimeout(() => {
+				setShowCloudPopup?.(false);
+			}, 10000);
+
+			return () => clearTimeout(timeout);
 		}
 	}, [boardName, setShowCloudPopup]);
 
@@ -109,13 +120,16 @@ const RootLayout = () => {
 					</button>
 					<MultipleClouds cloudTint={cloudTint} />
 					{showCloudPopup && <CloudPopup />}
+					<DiceMore />
+					<EndModal />
 					{boardComponents[boardName]}
 					<audio
+						ref={audioRef}
 						src="/audio/kazez.mp3"
 						autoPlay
 						loop
 						muted={muted}
-						className="opacity-0 "
+						className="opacity-0"
 					/>
 				</>
 			)}
