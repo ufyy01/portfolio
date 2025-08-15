@@ -89,11 +89,13 @@ const RootLayout = () => {
 		) {
 			setShowCloudPopup?.(true);
 
-			const timeout = setTimeout(() => {
-				setShowCloudPopup?.(false);
-			}, 10000);
+			if (boardName !== "default") {
+				const timeout = setTimeout(() => {
+					setShowCloudPopup?.(false);
+				}, 10000);
 
-			return () => clearTimeout(timeout);
+				return () => clearTimeout(timeout);
+			}
 		}
 	}, [boardName, setShowCloudPopup]);
 
