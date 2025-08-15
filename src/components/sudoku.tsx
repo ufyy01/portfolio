@@ -163,11 +163,11 @@ const Sudoku: React.FC<FlipCardProps> = ({ setGame }) => {
 	return (
 		<div className="w-full flex flex-col items-center gap-6 py-6">
 			{/* HUD */}
-			<div className="w-full max-w-3xl flex items-center justify-between px-4">
-				<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
+			<div className="w-full max-w-3xl flex items-center justify-between px-4 gap-4">
+				<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400 text-nowrap">
 					Alphabet Sudoku
 				</h2>
-				<div className="flex items-center gap-3">
+				<div className="flex items-center gap-3 flex-wrap">
 					<span
 						className={`px-3 py-1 rounded-md text-white ${
 							timeLeft <= 15
@@ -178,11 +178,7 @@ const Sudoku: React.FC<FlipCardProps> = ({ setGame }) => {
 						}`}>
 						⏱ {formatTime(timeLeft)}
 					</span>
-					<button
-						onClick={() => setPaused((p) => !p)}
-						className="px-3 py-1 rounded-md bg-[#fc045c] text-white hover:bg-slate-700 transition">
-						{paused ? "Resume" : "Pause"}
-					</button>
+
 					<button
 						onClick={resetGame}
 						className="px-3 py-1 rounded-md bg-[#fc045c] text-white hover:bg-slate-700 transition">

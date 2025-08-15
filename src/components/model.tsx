@@ -583,7 +583,7 @@ const Model = () => {
 					const cur = boardPositionRef.current as number;
 					const dest = sectionDestRef.current as number;
 					const pathFromHere = buildClockwisePath(cur, dest);
-					if (pathFromHere.length > 2) {
+					if (pathFromHere.length > 1) {
 						const resumed = resumeSectionJump();
 						if (resumed) return;
 					}
@@ -643,14 +643,23 @@ const Model = () => {
 		const dest = sectionDestRef.current as number;
 		if (cur === dest) return false;
 
-		const full = buildClockwisePath(cur, dest);
-		const [, next, ...rest] = full;
-		if (typeof next !== "number") return false;
-
-		// If we are already on the last hop (current + destination only), let normal arrival handle it
+		// Build path from current to destination (clockwise)
 		const pathFromHere = buildClockwisePath(cur, dest);
-		if (pathFromHere.length <= 2) return false;
 
+		// If only one hop remains (cur -> dest), perform that hop now
+		if (pathFromHere.length === 2) {
+			movePathRef.current = null;
+			setBoardPosition!(dest);
+			const { position: p } = meshPosition(dest);
+			targetPos.current.set(p.x, p.y, p.z);
+			isMovingRef.current = true;
+			setAnimation("Walk");
+			return true;
+		}
+
+		// Otherwise, take the next step and queue the rest
+		const [, next, ...rest] = pathFromHere;
+		if (typeof next !== "number") return false;
 		movePathRef.current = rest;
 		setBoardPosition!(next);
 		const { position: p } = meshPosition(next);
@@ -685,7 +694,7 @@ const Model = () => {
 			const cur = boardPositionRef.current as number;
 			const dest = sectionDestRef.current as number;
 			const pathFromHere = buildClockwisePath(cur, dest);
-			if (pathFromHere.length > 2) {
+			if (pathFromHere.length > 1) {
 				const resumed = resumeSectionJump();
 				if (resumed) return;
 			}

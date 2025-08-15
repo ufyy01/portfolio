@@ -171,14 +171,14 @@ const CloudPopup = () => {
 	return (
 		<div
 			ref={popupRef}
-			className="z-[2000] w-full fixed bottom-0 left-0 flex justify-end">
-			<div className=" w-full md:w-6/12 text-lg  bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
+			className="z-[2000] w-full lg:w-6/12 fixed bottom-0 right-0">
+			<div className=" w-full  text-lg  bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
 				<div className="w-9/12 mx-auto space-y-3 h-full">
 					<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20">
 						{currentMessage?.title}
 					</h2>
 					<div
-						className="text-[#fc045c] text-center"
+						className="text-[#fc045c] text-center text-xl"
 						dangerouslySetInnerHTML={{ __html: currentMessage?.text || "" }}
 					/>
 					{boardName === "default" && (

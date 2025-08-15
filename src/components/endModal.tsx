@@ -29,7 +29,9 @@ const EndModal = () => {
 
 	useEffect(() => {
 		if (boardName === "gameOver" || boardName === "special") {
-			setShowModal(true);
+			setTimeout(() => {
+				setShowModal(true);
+			}, 5000);
 		} else {
 			setShowModal(false);
 		}

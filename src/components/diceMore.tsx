@@ -49,11 +49,11 @@ const DiceMore = () => {
 								You're such a good sport!
 							</h2>
 							<p className="mt-2 ">
-								Good work! You need to roll a{" "}
+								Good work! You need to roll{" "}
 								<span className="font-fraunces text-3xl text-orange-400">
 									{numberToEndGame}
 								</span>{" "}
-								or less to continue!
+								{numberToEndGame > 1 ? "or more" : ""} to continue!
 							</p>
 						</div>
 					</div>

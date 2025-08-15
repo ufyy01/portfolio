@@ -246,7 +246,7 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 	return (
 		<div className="fixed inset-0 z-[2000] bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
 			<div className="z-[2500]">
-				<div className="w-full max-w-3xl flex items-center justify-between px-4 my-5">
+				<div className="w-full max-w-3xl flex items-center justify-between px-4 my-5 flex-wrap">
 					<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
 						Word Shuffle
 					</h2>

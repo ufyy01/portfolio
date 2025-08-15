@@ -32,7 +32,7 @@ const Projects = () => {
 							<p className="text-start font-fraunces italic text-orange-400 mt-10 text-3xl md:text-5xl">
 								What I'm working on..
 							</p>
-							<p className="text-start  text-white my-5 text-lg">
+							<p className="text-start text-pretty  text-white my-5 text-lg">
 								I'm currently working on several projects that I'm excited to
 								share with you. These projects are a mix of personal interests
 								and professional endeavors, showcasing my skills in software
@@ -64,7 +64,9 @@ const Projects = () => {
 								React Native, Expo, Skia, Zustand, TypeScript, Node.js, Express,
 								MongoDB
 							</p>
-							<Button size="lg" className="bg-[#fc045c] relative z-[200] ">
+							<Button
+								size="lg"
+								className="bg-[#fc045c] relative z-[200] w-full lg:w-fit">
 								<a
 									href="mailto:amazingufy@gmail.com"
 									className="font-fraunces italic text-xl text-white">
@@ -93,7 +95,9 @@ const Projects = () => {
 								React Native, Expo, Matter.js, TypeScript, Zustand, Procreate,
 								Node.js, Express, MongoDB
 							</p>
-							<Button size="lg" className="bg-[#fc045c] relative z-[200] mb-4">
+							<Button
+								size="lg"
+								className="bg-[#fc045c] relative z-[200] mb-4 w-full lg:w-fit">
 								<a
 									href="mailto:amazingufy@gmail.com"
 									className="font-fraunces italic text-xl text-white">
