@@ -144,70 +144,74 @@ const Skills = () => {
 	return (
 		<Drawer open={showMore} onOpenChange={setShowMore}>
 			<DrawerContent
-				className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12 pb-5 max-h-[85svh] h-[85svh] md:h-auto overflow-y-auto overscroll-contain touch-pan-y after:hidden"
+				className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12 pb-5 max-h-[85svh] h-[85svh] md:h-auto overflow-hidden flex flex-col after:hidden"
 				style={{ WebkitOverflowScrolling: "touch" }}>
-				<DrawerHeader>
-					<DrawerTitle className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
-						My Skills
-					</DrawerTitle>
-					<DrawerDescription className="w-11/12 mx-auto text-lg  text-white textcenter lg:text-start">
-						I have a diverse set of skills that I have developed over the years.
-						My expertise includes web development, design, and problem-solving.
-						I am proficient in various programming languages and frameworks,
-						allowing me to create dynamic and responsive web applications. I
-						also have a keen eye for design, ensuring that my projects are not
-						only functional but also visually appealing.
-						<p className="text-2xl text-orange-400 font-fraunces italic mt-8">
-							Technical Skills
-						</p>
-						<div className="flex flex-wrap justify-center gap-4 mx-auto my-4">
-							{skills.slice(0, 15).map((skill) => (
-								<div
-									key={skill.name}
-									className="bg-pink-100/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg p-4 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] text-center transition-transform duration-300 hover:scale-105 hover:shadow-xl group">
-									<span className="text-6xl w-fit mx-auto block transition-transform duration-300 group-hover:-translate-y-2">
-										{skill.icon}
-									</span>
-									<div>
-										<p className="font-fraunces text-2xl my-2 text-[#fc045c] ">
-											{skill.name}
-										</p>
-										<p className="text-lg text-white">{skill.description}</p>
+				<div
+					className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y pr-2"
+					style={{ WebkitOverflowScrolling: "touch" }}>
+					<DrawerHeader>
+						<DrawerTitle className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
+							My Skills
+						</DrawerTitle>
+						<DrawerDescription className="w-11/12 mx-auto text-lg  text-white textcenter lg:text-start">
+							I have a diverse set of skills that I have developed over the
+							years. My expertise includes web development, design, and
+							problem-solving. I am proficient in various programming languages
+							and frameworks, allowing me to create dynamic and responsive web
+							applications. I also have a keen eye for design, ensuring that my
+							projects are not only functional but also visually appealing.
+							<p className="text-2xl text-orange-400 font-fraunces italic mt-8">
+								Technical Skills
+							</p>
+							<div className="flex flex-wrap justify-center gap-4 mx-auto my-4">
+								{skills.slice(0, 15).map((skill) => (
+									<div
+										key={skill.name}
+										className="bg-pink-100/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg p-4 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] text-center transition-transform duration-300 hover:scale-105 hover:shadow-xl group">
+										<span className="text-6xl w-fit mx-auto block transition-transform duration-300 group-hover:-translate-y-2">
+											{skill.icon}
+										</span>
+										<div>
+											<p className="font-fraunces text-2xl my-2 text-[#fc045c] ">
+												{skill.name}
+											</p>
+											<p className="text-lg text-white">{skill.description}</p>
+										</div>
 									</div>
-								</div>
-							))}
-						</div>
-						<p className="text-2xl text-orange-400 font-fraunces italic mt-8">
-							Soft Skills
-						</p>
-						<div className="flex flex-wrap justify-center gap-4 mx-auto my-4">
-							{skills.slice(15).map((skill) => (
-								<div
-									key={skill.name}
-									className="bg-pink-100/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg p-4 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] text-center transition-transform duration-300 hover:scale-105 hover:shadow-xl group">
-									<span className="text-6xl w-fit mx-auto block transition-transform duration-300 group-hover:-translate-y-2">
-										{skill.icon}
-									</span>
-									<div>
-										<p className="font-fraunces text-2xl my-2 text-[#fc045c] ">
-											{skill.name}
-										</p>
-										<p className="text-lg text-white">{skill.description}</p>
+								))}
+							</div>
+							<p className="text-2xl text-orange-400 font-fraunces italic mt-8">
+								Soft Skills
+							</p>
+							<div className="flex flex-wrap justify-center gap-4 mx-auto my-4">
+								{skills.slice(15).map((skill) => (
+									<div
+										key={skill.name}
+										className="bg-pink-100/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg p-4 w-full md:w-[calc(50%-1rem)] lg:w-[calc(33.333%-1rem)] text-center transition-transform duration-300 hover:scale-105 hover:shadow-xl group">
+										<span className="text-6xl w-fit mx-auto block transition-transform duration-300 group-hover:-translate-y-2">
+											{skill.icon}
+										</span>
+										<div>
+											<p className="font-fraunces text-2xl my-2 text-[#fc045c] ">
+												{skill.name}
+											</p>
+											<p className="text-lg text-white">{skill.description}</p>
+										</div>
 									</div>
-								</div>
-							))}
-						</div>
-						<Button
-							size="lg"
-							className="bg-[#fc045c] z-[200] my-4 w-full mx-auto">
-							<a
-								href="mailto:amazingufy@gmail.com"
-								className="font-fraunces italic text-xl text-white">
-								Click here, to get in touch!
-							</a>
-						</Button>
-					</DrawerDescription>
-				</DrawerHeader>
+								))}
+							</div>
+							<Button
+								size="lg"
+								className="bg-[#fc045c] z-[200] my-4 w-full mx-auto">
+								<a
+									href="mailto:amazingufy@gmail.com"
+									className="font-fraunces italic text-xl text-white">
+									Click here, to get in touch!
+								</a>
+							</Button>
+						</DrawerDescription>
+					</DrawerHeader>
+				</div>
 				<DrawerFooter>
 					<DrawerClose>
 						<Button size="lg" className="bg-white text-orange-400 ">
