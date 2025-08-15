@@ -182,11 +182,6 @@ const CloudPopup = () => {
 			text: `<p>Let's create something amazing together!</p>`,
 		},
 		{
-			name: "jumpAhead",
-			title: "Jump Ahead",
-			text: `<p>You can jump ahead in the game by rolling a high number on the dice!</p>`,
-		},
-		{
 			name: "controller",
 			title: "Game Break!",
 			text: `<p>Pause to play some of my favorite games or continue your journey through the board!</p>`,

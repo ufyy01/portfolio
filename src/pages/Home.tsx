@@ -21,12 +21,14 @@ function Home() {
 				<OrbitControls
 					makeDefault
 					enableRotate={false}
-					enablePan={false}
+					enablePan={true}
 					minDistance={10}
 					maxDistance={40}
 					zoomSpeed={0.5}
 					maxPolarAngle={Math.PI / 3}
 					minPolarAngle={Math.PI / 4}
+					minAzimuthAngle={-Math.PI / 8}
+					maxAzimuthAngle={Math.PI / 8}
 				/>
 
 				<Float>

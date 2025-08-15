@@ -82,7 +82,6 @@ const RootLayout = () => {
 				"backToStart",
 				"headset",
 				"contact",
-				"jumpAhead",
 				"controller",
 				"resume",
 			].includes(boardName)
