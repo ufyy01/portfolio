@@ -9,6 +9,10 @@ interface DeviceMotionEventWithPermission extends DeviceMotionEvent {
 	requestPermission?: () => Promise<"granted" | "denied">;
 }
 
+interface DeviceOrientationEventWithPermission extends DeviceOrientationEvent {
+	requestPermission?: () => Promise<"granted" | "denied">;
+}
+
 const CloudPopup = () => {
 	const isMobile = useIsMobile();
 
@@ -56,37 +60,54 @@ const CloudPopup = () => {
 		return () => ctx.revert();
 	}, []);
 
-	const setShowCloudPopup = gameContext?.setShowCloudPopup;
-
-	const setShowMore = gameContext?.setShowMore;
-
 	const grantedMotionPermission = gameContext?.grantedMotionPermission;
 	const setGrantedMotionPermission = gameContext?.setGrantedMotionPermission;
 
-	const handleGesturePermission = () => {
-		if (!isMobile || grantedMotionPermission) return;
-		const DeviceMotionEventWithPerm =
-			DeviceMotionEvent as unknown as DeviceMotionEventWithPermission;
-		if (
-			typeof DeviceMotionEventWithPerm !== "undefined" &&
-			typeof DeviceMotionEventWithPerm.requestPermission === "function"
-		) {
-			DeviceMotionEventWithPerm.requestPermission!()
-				.then((permissionState) => {
-					if (permissionState === "granted") {
-						setGrantedMotionPermission?.(true);
-					} else {
-						setGrantedMotionPermission?.(false);
-					}
-				})
-				.catch((err) => {
-					console.error("Error requesting motion permission:", err);
-					setGrantedMotionPermission?.(false);
-				});
-		} else {
-			setGrantedMotionPermission?.(true);
+	const handleGesturePermission = async () => {
+		try {
+			const DME = (
+				window as unknown as {
+					DeviceMotionEvent?: DeviceMotionEventWithPermission;
+				}
+			).DeviceMotionEvent;
+			const DOE = (
+				window as unknown as {
+					DeviceOrientationEvent?: DeviceOrientationEventWithPermission;
+				}
+			).DeviceOrientationEvent;
+
+			let granted = grantedMotionPermission ?? false;
+
+			// Prefer feature detection over isMobile. iOS Safari exposes requestPermission on these constructors.
+			if (typeof DME?.requestPermission === "function") {
+				const res = await DME.requestPermission();
+				granted = res === "granted" || granted;
+			}
+			if (typeof DOE?.requestPermission === "function") {
+				const res2 = await DOE.requestPermission();
+				granted = res2 === "granted" || granted;
+			}
+
+			// Fallback: if neither permission API exists, assume allowed
+			if (
+				typeof DME?.requestPermission !== "function" &&
+				typeof DOE?.requestPermission !== "function"
+			) {
+				granted = true;
+			}
+
+			setGrantedMotionPermission?.(granted);
+			return granted;
+		} catch (err) {
+			console.error("Error requesting motion/orientation permission:", err);
+			setGrantedMotionPermission?.(false);
+			return false;
 		}
 	};
+
+	const setShowCloudPopup = gameContext?.setShowCloudPopup;
+
+	const setShowMore = gameContext?.setShowMore;
 
 	const boardName = gameContext?.boardName || "default";
 
@@ -122,11 +143,11 @@ const CloudPopup = () => {
       Welcome to the game! <br />
       Tap the Dice to start rolling!. <br />
       Make sure to <span class="font-bold text-orange-400">grant gesture access</span> so you can <span class="font-bold text-orange-400">SHAKE </span> your phone to roll the dice!</p>
-      <p > You can use <span class="font-bold text-orange-400">two fingers to zoom into and out </span> of the board for a custom experience!</p>`
+      <p > You can use <span class="font-bold text-orange-400">two fingers to zoom into and out and to pan left and right</span> of the board for a custom experience!</p>`
 				: `<p>Hi there, I'm Ufuoma. <br />
       Welcome to the game! <br />
       Click the Dice to start rolling!</p>
-       <p > You can use your mouse or trackpad to <br /> <span class="font-bold text-orange-400"> zoom into and out </span> of the board <br /> for a custom experience!</p>
+       <p > You can use your mouse or trackpad to <br /> <span class="font-bold text-orange-400"> zoom into and out and to pan left and right</span> of the board <br /> for a custom experience!</p>
       `,
 		},
 		{
@@ -174,7 +195,7 @@ const CloudPopup = () => {
 			title: "Music",
 			text:
 				headsetMessage[Math.floor(Math.random() * headsetMessage.length)] +
-				`\n <p>Special thanks to <strong> <a href="https://music.apple.com/ng/artist/the-kazez/1471408685" className="underline">The Kazez</a></strong> for the background music!</p>`,
+				`\n <p>Special thanks to <strong> <a href="https://music.apple.com/ng/artist/the-kazez/1471408685" class="underline">The Kazez</a></strong> for the background music!</p>`,
 		},
 		{
 			name: "contact",
@@ -214,7 +235,8 @@ const CloudPopup = () => {
 							<Button
 								size="lg"
 								className="bg-white relative z-[200] disabled:opacity-50 disabled:cursor-not-allowed"
-								onClick={() => {
+								onClick={async () => {
+									await handleGesturePermission();
 									if (popupRef.current) {
 										gsap.to(popupRef.current, {
 											xPercent: 100,
@@ -223,10 +245,6 @@ const CloudPopup = () => {
 											ease: "power2.in",
 											onComplete: () => {
 												setShowCloudPopup?.(false);
-												// Defer permission request to avoid re-render during exit animation
-												setTimeout(() => {
-													handleGesturePermission();
-												}, 0);
 											},
 										});
 									}
