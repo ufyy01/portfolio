@@ -145,9 +145,9 @@ const CloudPopup = () => {
       Make sure to <span class="font-bold text-orange-400">grant gesture access</span> so you can <span class="font-bold text-orange-400">SHAKE </span> your phone to roll the dice!</p>
       <p > You can use <span class="font-bold text-orange-400">two fingers to zoom into and out and to pan left and right</span> of the board for a custom experience!</p>`
 				: `<p>Hi there, I'm Ufuoma. <br />
-      Welcome to the game! <br />
+      Welcome to the game! 
       Click the Dice to start rolling!</p>
-       <p > You can use your mouse or trackpad to <br /> <span class="font-bold text-orange-400"> zoom into and out and to pan left and right</span> of the board <br /> for a custom experience!</p>
+       <p > You can use your mouse or trackpad to <br /> <span class="font-bold text-orange-400"> zoom into and out and to pan left and right</span> of the board for a custom experience!</p>
       `,
 		},
 		{
@@ -217,153 +217,161 @@ const CloudPopup = () => {
 	const currentMessage = message.find((msg) => msg.name === boardName);
 
 	return (
-		<div
-			ref={popupRef}
-			style={{ visibility: bgLoaded ? "visible" : "hidden" }}
-			className="z-[2000] w-full lg:w-6/12 fixed bottom-0 right-0 will-change-transform transform-gpu">
-			<div className=" w-full  text-lg  bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative">
-				<div className="w-9/12 mx-auto space-y-3 h-full">
-					<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20">
-						{currentMessage?.title}
-					</h2>
-					<div
-						className="text-[#fc045c] text-center text-xl"
-						dangerouslySetInnerHTML={{ __html: currentMessage?.text || "" }}
-					/>
-					{boardName === "default" && (
-						<div className="flex justify-center my-5">
-							<Button
-								size="lg"
-								className="bg-white relative z-[200] disabled:opacity-50 disabled:cursor-not-allowed"
-								onClick={async () => {
-									await handleGesturePermission();
-									if (popupRef.current) {
-										gsap.to(popupRef.current, {
-											xPercent: 100,
-											autoAlpha: 0,
-											duration: 0.5,
-											ease: "power2.in",
-											onComplete: () => {
-												setShowCloudPopup?.(false);
-											},
-										});
-									}
-								}}>
-								<Icon
-									icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-									width="50"
-									height="50"
-									color="oklch(75% 0.183 55.934)"
-									className="w-12 h-12 mr-2"
-								/>
-								<p className="font-fraunces italic text-2xl text-orange-400">
-									I'm ready to play!
-								</p>
-							</Button>
-						</div>
-					)}
+		<>
+			{currentMessage && (
+				<div
+					ref={popupRef}
+					style={{ visibility: bgLoaded ? "visible" : "hidden" }}
+					className="z-[2000] w-full lg:w-9/12 xl:w-6/12 fixed bottom-0 right-0 will-change-transform transform-gpu">
+					<div className=" w-full  text-lg  bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative">
+						<div className="w-9/12 mx-auto space-y-3 h-full">
+							<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20 pt-2">
+								{currentMessage?.title}
+							</h2>
+							<div
+								className="text-[#fc045c] text-center text-xl"
+								dangerouslySetInnerHTML={{ __html: currentMessage?.text || "" }}
+							/>
+							{boardName === "default" && (
+								<div className="flex justify-center my-5">
+									<Button
+										size="lg"
+										className="bg-white relative z-[200] disabled:opacity-50 disabled:cursor-not-allowed"
+										onClick={async () => {
+											await handleGesturePermission();
+											if (popupRef.current) {
+												gsap.to(popupRef.current, {
+													xPercent: 100,
+													autoAlpha: 0,
+													duration: 0.5,
+													ease: "power2.in",
+													onComplete: () => {
+														setShowCloudPopup?.(false);
+													},
+												});
+											}
+										}}>
+										<Icon
+											icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
+											width="50"
+											height="50"
+											color="oklch(75% 0.183 55.934)"
+											className="w-12 h-12 mr-2"
+										/>
+										<p className="font-fraunces italic text-2xl text-orange-400">
+											I'm ready to play!
+										</p>
+									</Button>
+								</div>
+							)}
 
-					{["about", "laptop", "headset", "backToStart"].includes(
-						boardName
-					) && (
-						<div className="flex gap-3 justify-center my-5 flex-wrap">
-							<Button
-								size="lg"
-								type="button"
-								className="bg-white relative z-[200] "
-								onClick={() => {
-									if (popupRef.current) {
-										gsap.to(popupRef.current, {
-											xPercent: 100,
-											autoAlpha: 0,
-											duration: 0.5,
-											ease: "power2.in",
-											onComplete: () => {
-												setShowCloudPopup?.(false);
-											},
-										});
-									}
-								}}>
-								<Icon
-									icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-									width="50"
-									height="50"
-									color="oklch(75% 0.183 55.934)"
-									className="w-12 h-12 mr-2"
-								/>
-								<p className="font-fraunces italic text-2xl text-orange-400">
-									Dismiss
-								</p>
-							</Button>
-						</div>
-					)}
+							{["about", "laptop", "headset", "backToStart"].includes(
+								boardName
+							) && (
+								<div className="flex gap-3 justify-center my-5 flex-wrap">
+									<Button
+										size="lg"
+										type="button"
+										className="bg-white relative z-[200] "
+										onClick={() => {
+											if (popupRef.current) {
+												gsap.to(popupRef.current, {
+													xPercent: 100,
+													autoAlpha: 0,
+													duration: 0.5,
+													ease: "power2.in",
+													onComplete: () => {
+														setShowCloudPopup?.(false);
+													},
+												});
+											}
+										}}>
+										<Icon
+											icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
+											width="50"
+											height="50"
+											color="oklch(75% 0.183 55.934)"
+											className="w-12 h-12 mr-2"
+										/>
+										<p className="font-fraunces italic text-2xl text-orange-400">
+											Dismiss
+										</p>
+									</Button>
+								</div>
+							)}
 
-					{["skills", "projects", "contact", "controller", "resume"].includes(
-						boardName
-					) && (
-						<div className="flex gap-3 justify-center my-5 flex-wrap">
-							<Button
-								size="lg"
-								type="button"
-								className="bg-orange-400 relative z-[200] "
-								onClick={() => {
-									if (popupRef.current) {
-										gsap.to(popupRef.current, {
-											xPercent: 100,
-											autoAlpha: 0,
-											duration: 0.5,
-											ease: "power2.in",
-											onComplete: () => {
-												setShowCloudPopup?.(false);
-												setShowMore?.(true);
-											},
-										});
-									}
-								}}>
-								<Icon
-									icon="ep:info-filled"
-									width="50"
-									height="50"
-									color="white"
-									className="w-12 h-12 mr-2"
-								/>
-								<p className="font-fraunces italic text-2xl text-white">
-									Jump To
-								</p>
-							</Button>
-							<Button
-								size="lg"
-								type="button"
-								className="bg-white relative z-[200] "
-								onClick={() => {
-									if (popupRef.current) {
-										gsap.to(popupRef.current, {
-											xPercent: 100,
-											autoAlpha: 0,
-											duration: 0.2,
-											ease: "power2.in",
-											onComplete: () => {
-												setShowCloudPopup?.(false);
-											},
-										});
-									}
-								}}>
-								<Icon
-									icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-									width="50"
-									height="50"
-									color="oklch(75% 0.183 55.934)"
-									className="w-12 h-12 mr-2"
-								/>
-								<p className="font-fraunces italic text-2xl text-orange-400">
-									Dismiss
-								</p>
-							</Button>
+							{[
+								"skills",
+								"projects",
+								"contact",
+								"controller",
+								"resume",
+							].includes(boardName) && (
+								<div className="flex gap-3 justify-center my-5 flex-wrap">
+									<Button
+										size="lg"
+										type="button"
+										className="bg-orange-400 relative z-[200] "
+										onClick={() => {
+											if (popupRef.current) {
+												gsap.to(popupRef.current, {
+													xPercent: 100,
+													autoAlpha: 0,
+													duration: 0.5,
+													ease: "power2.in",
+													onComplete: () => {
+														setShowCloudPopup?.(false);
+														setShowMore?.(true);
+													},
+												});
+											}
+										}}>
+										<Icon
+											icon="ep:info-filled"
+											width="50"
+											height="50"
+											color="white"
+											className="w-12 h-12 mr-2"
+										/>
+										<p className="font-fraunces italic text-2xl text-white">
+											Jump To
+										</p>
+									</Button>
+									<Button
+										size="lg"
+										type="button"
+										className="bg-white relative z-[200] "
+										onClick={() => {
+											if (popupRef.current) {
+												gsap.to(popupRef.current, {
+													xPercent: 100,
+													autoAlpha: 0,
+													duration: 0.2,
+													ease: "power2.in",
+													onComplete: () => {
+														setShowCloudPopup?.(false);
+													},
+												});
+											}
+										}}>
+										<Icon
+											icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
+											width="50"
+											height="50"
+											color="oklch(75% 0.183 55.934)"
+											className="w-12 h-12 mr-2"
+										/>
+										<p className="font-fraunces italic text-2xl text-orange-400">
+											Dismiss
+										</p>
+									</Button>
+								</div>
+							)}
 						</div>
-					)}
+					</div>
 				</div>
-			</div>
-		</div>
+			)}
+		</>
 	);
 };
 

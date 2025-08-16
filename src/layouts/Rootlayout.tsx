@@ -25,6 +25,7 @@ const RootLayout = () => {
 	const boardName = gameContext?.boardName || "start";
 	const playing = gameContext?.playing || false;
 	const setPlaying = gameContext?.setPlaying || (() => {});
+	const isWalking = gameContext?.isWalking || false;
 
 	const { progress } = useProgress();
 
@@ -88,13 +89,13 @@ const RootLayout = () => {
 		) {
 			setShowCloudPopup?.(true);
 
-			if (boardName !== "default") {
-				const timeout = setTimeout(() => {
-					setShowCloudPopup?.(false);
-				}, 10000);
+			// if (boardName !== "default") {
+			// 	const timeout = setTimeout(() => {
+			// 		setShowCloudPopup?.(false);
+			// 	}, 10000);
 
-				return () => clearTimeout(timeout);
-			}
+			// 	return () => clearTimeout(timeout);
+			// }
 		}
 	}, [boardName, setShowCloudPopup]);
 
@@ -120,7 +121,7 @@ const RootLayout = () => {
 						)}
 					</button>
 					<MultipleClouds cloudTint={cloudTint} />
-					{showCloudPopup && <CloudPopup />}
+					{showCloudPopup && !isWalking && <CloudPopup />}
 					<DiceMore />
 					<EndModal />
 					{boardComponents[boardName]}

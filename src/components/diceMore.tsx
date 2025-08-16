@@ -45,7 +45,7 @@ const DiceMore = () => {
 					className="z-[2000] w-full fixed bottom-0 left-0 flex justify-start">
 					<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
 						<div className="mt-10 w-9/12 text-center">
-							<h2 className=" text-3xl font-fraunces text-[#fc045c]">
+							<h2 className=" text-3xl font-fraunces text-[#fc045c] mt-5">
 								You're such a good sport!
 							</h2>
 							<p className="mt-2 ">
@@ -53,7 +53,7 @@ const DiceMore = () => {
 								<span className="font-fraunces text-3xl text-orange-400">
 									{numberToEndGame}
 								</span>{" "}
-								{numberToEndGame > 1 ? "or more" : ""} to continue!
+								{numberToEndGame > 1 ? "or less" : ""} to continue!
 							</p>
 						</div>
 					</div>

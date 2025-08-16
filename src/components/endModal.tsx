@@ -42,7 +42,7 @@ const EndModal = () => {
 			{showModal && (
 				<div
 					ref={popupRef}
-					className="z-[2000] w-full lg:w-6/12 fixed bottom-0 lg:bottom-[30%] lg:left-[25%]">
+					className="z-[2000] w-full lg:w-6/12 fixed bottom-0  lg:left-[25%]">
 					<div className=" w-full text-lg bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top h-full rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
 						<div className="w-9/12 mx-auto space-y-3 h-full text-center mt-5 lg:mt-20 mb-10 text-lg">
 							<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
@@ -132,7 +132,7 @@ const EndModal = () => {
 								type="button"
 								className="bg-[#fc045c] relative z-[200] lg:w-6/12 "
 								onClick={() => {
-									jumpToBoardPosition("default");
+									jumpToBoardPosition(0);
 								}}>
 								<Icon
 									icon="ep:info-filled"
@@ -145,32 +145,35 @@ const EndModal = () => {
 									Play Again!
 								</p>
 							</Button>
-							<p className="text-sm ">
-								Thank you to{" "}
-								<strong>
-									{" "}
-									<a
-										href="https://music.apple.com/ng/artist/the-kazez/1471408685"
-										target="_blank"
-										className="underline">
-										The Kazez
-									</a>
-								</strong>{" "}
-								for the background music!
-							</p>
-							<p className="text-sm ">
-								Credit to{" "}
-								<strong>
-									{" "}
-									<a
-										href="https://readyplayer.me"
-										target="_blank"
-										className="underline">
-										Ready Player Me
-									</a>
-								</strong>{" "}
-								for the avatar assets, saved me a lot of time!
-							</p>
+							<div className="my-4">
+								{" "}
+								<p className="text-sm ">
+									Thank you to{" "}
+									<strong>
+										{" "}
+										<a
+											href="https://music.apple.com/ng/artist/the-kazez/1471408685"
+											target="_blank"
+											className="underline">
+											The Kazez
+										</a>
+									</strong>{" "}
+									for the background music!
+								</p>
+								<p className="text-sm ">
+									Credit to{" "}
+									<strong>
+										{" "}
+										<a
+											href="https://readyplayer.me"
+											target="_blank"
+											className="underline">
+											Ready Player Me
+										</a>
+									</strong>{" "}
+									for the avatar assets, saved me a lot of time!
+								</p>
+							</div>
 						</div>
 					</div>
 				</div>

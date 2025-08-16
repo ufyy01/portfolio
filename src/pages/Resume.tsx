@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { GameContext } from "@/context/gameContext";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 
 import {
 	Drawer,
@@ -21,6 +21,23 @@ const Resume = () => {
 
 	const [previewOpen, setPreviewOpen] = useState(false);
 
+	const [isIOS, setIsIOS] = useState(false);
+	const pdfPath = "/Ufuoma Ohwo-Resume.pdf";
+	const pdfUrl = encodeURI(pdfPath);
+
+	useEffect(() => {
+		try {
+			const ua = navigator.userAgent || "";
+			const isTouchMac =
+				navigator.platform === "MacIntel" &&
+				(navigator as Navigator & { maxTouchPoints?: number }).maxTouchPoints! >
+					1;
+			setIsIOS(/iPad|iPhone|iPod/.test(ua) || isTouchMac);
+		} catch {
+			setIsIOS(false);
+		}
+	}, []);
+
 	if (!showMore || boardName !== "resume") {
 		return null;
 	}
@@ -28,7 +45,7 @@ const Resume = () => {
 	return (
 		<Drawer open={showMore} onOpenChange={setShowMore}>
 			<DrawerContent
-				className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12 pb-5 max-h-[85svh] h-[85svh] md:h-auto overflow-hidden flex flex-col after:hidden"
+				className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12 pb-5 max-h-[90svh] h-[90svh] md:h-auto overflow-hidden flex flex-col after:hidden"
 				style={{ WebkitOverflowScrolling: "touch" }}>
 				<div
 					className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y pr-2"
@@ -68,17 +85,39 @@ const Resume = () => {
 							<div className="relative w-full max-w-5xl h-[70vh] rounded-lg overflow-hidden border border-white/20 bg-black/30">
 								{/* Small discrete download button */}
 								<a
-									href="/Ufuoma Ohwo-Resume.pdf"
+									href={pdfUrl}
 									download
 									className="absolute top-2 right-2 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm bg-white/90 text-slate-900 hover:bg-white">
 									<Download size={16} /> Download PDF
 								</a>
 								{/* PDF viewer */}
-								<iframe
-									src="/Ufuoma Ohwo-Resume.pdf#view=FitH"
-									title="Resume PDF"
-									className="w-full h-full"
-								/>
+								{isIOS ? (
+									<div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4 text-white/90">
+										<p className="text-center text-sm md:text-base">
+											Inline PDF preview is limited on iPhone/iPad. Tap below to
+											open the resume in a new tab.
+										</p>
+										<a
+											href={pdfUrl}
+											target="_blank"
+											rel="noopener noreferrer"
+											className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white/90 text-slate-900 hover:bg-white">
+											<FileText size={16} /> Open Fullscreen
+										</a>
+									</div>
+								) : (
+									<object
+										data={`${pdfUrl}#view=FitH`}
+										type="application/pdf"
+										className="w-full h-full">
+										{/* Fallback for browsers that block object */}
+										<iframe
+											src={`${pdfUrl}#view=FitH`}
+											title="Resume PDF"
+											className="w-full h-full"
+										/>
+									</object>
+								)}
 							</div>
 						)}
 					</div>

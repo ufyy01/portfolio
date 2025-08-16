@@ -197,7 +197,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 			</div>
 
 			<div
-				className="px-5 py-8 bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg  w-11/12 lg:w-7/12 2xl:w-1/3 mx-auto h-8/12 md:h-fit text-white pb-5"
+				className="px-5 py-8 bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg  w-11/12 lg:w-8/12 xl:w-6/12 2xl:w-1/3 mx-auto h-8/12 md:h-fit text-white pb-5"
 				ref={knowRef}>
 				{/* {!doIknowYou && (
 					<div
@@ -291,7 +291,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
 							}`}
 							onClick={() => setVisitorType!("recruiter")}>
-							I am a recruiter 🕵🏽‍♀️
+							I am a recruiter
 						</Button>
 						<Button
 							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
@@ -300,7 +300,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
 							}`}
 							onClick={() => setVisitorType!("developer")}>
-							I am a developer 🧑🏽‍💻
+							I am a developer
 						</Button>
 						<Button
 							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
@@ -309,7 +309,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
 							}`}
 							onClick={() => setVisitorType!("other")}>
-							I am a casual visitor 🧑🏽‍🤝‍🧑🏽
+							I am a casual visitor
 						</Button>
 					</div>
 
