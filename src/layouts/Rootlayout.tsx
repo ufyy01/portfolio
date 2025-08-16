@@ -122,7 +122,7 @@ const RootLayout = () => {
 					</button>
 					<MultipleClouds cloudTint={cloudTint} />
 					{showCloudPopup && !isWalking && <CloudPopup />}
-					<DiceMore />
+					{!isWalking && <DiceMore />}
 					<EndModal />
 					{boardComponents[boardName]}
 					<audio

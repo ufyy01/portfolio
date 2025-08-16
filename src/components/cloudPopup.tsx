@@ -265,7 +265,7 @@ const CloudPopup = () => {
 								</div>
 							)}
 
-							{["about", "laptop", "headset", "backToStart"].includes(
+							{["about", "laptop", "headset", "rollAgain"].includes(
 								boardName
 							) && (
 								<div className="flex gap-3 justify-center my-5 flex-wrap">
