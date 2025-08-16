@@ -1,6 +1,7 @@
 import {
 	createBrowserRouter,
 	createRoutesFromElements,
+	Navigate,
 	Route,
 	RouterProvider,
 } from "react-router-dom";
@@ -12,7 +13,7 @@ const router = createBrowserRouter(
 		<Route path="/" element={<RootLayout />}>
 			<Route index element={<Home />} />
 
-			<Route path="*" element={<div>404 Not Found</div>} />
+			<Route path="*" element={<Navigate to="/" replace />} />
 		</Route>
 	)
 );
