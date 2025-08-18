@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import gsap from "gsap";
 const MultipleClouds = ({ cloudTint = "" }: { cloudTint?: string }) => {
 	const cloudContainerRef = useRef<HTMLDivElement>(null);
@@ -30,10 +30,46 @@ const MultipleClouds = ({ cloudTint = "" }: { cloudTint?: string }) => {
 		});
 	}, []);
 
+	const isNight = useMemo(() => {
+		const hour = new Date().getHours();
+		return !(hour >= 6 && hour < 19);
+	}, []);
+
+	const stars = useMemo(
+		() =>
+			Array.from({ length: 120 }, () => ({
+				top: Math.random() * 100,
+				left: Math.random() * 100,
+				size: Math.random() < 0.8 ? 2 : 3,
+				delay: Math.random() * 3,
+				opacity: 0.6 + Math.random() * 0.4,
+			})),
+		[]
+	);
+
 	return (
 		<div
 			ref={cloudContainerRef}
 			className="absolute inset-0 pointer-events-none -z-10">
+			{isNight && (
+				<div className="pointer-events-none absolute inset-0 z-[0] overflow-hidden">
+					{stars.map((s, i) => (
+						<div
+							key={i}
+							className="absolute rounded-full bg-white animate-pulse"
+							style={{
+								top: `${s.top}%`,
+								left: `${s.left}%`,
+								width: `${s.size}px`,
+								height: `${s.size}px`,
+								opacity: s.opacity,
+								animationDuration: "2.2s",
+								animationDelay: `${s.delay}s`,
+							}}
+						/>
+					))}
+				</div>
+			)}
 			<div className="relative w-full h-full">
 				{images.map((src, index) => (
 					<img

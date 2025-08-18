@@ -1,4 +1,5 @@
-import { Outlet } from "react-router-dom";
+import React from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState, useRef } from "react";
 import OpenScreen from "@/components/openScreen";
 import CloudPopup from "@/components/cloudPopup";
@@ -15,6 +16,66 @@ import type { ReactElement } from "react";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import DiceMore from "@/components/diceMore";
 import EndModal from "@/components/endModal";
+import Menu from "@/components/menu";
+
+class ErrorBoundary extends React.Component<
+	{ children: React.ReactNode },
+	{ hasError: boolean; error?: Error }
+> {
+	constructor(props: { children: React.ReactNode }) {
+		super(props);
+		this.state = { hasError: false };
+	}
+
+	static getDerivedStateFromError(error: Error) {
+		return { hasError: true, error };
+	}
+
+	componentDidCatch(error: Error, info: React.ErrorInfo) {
+		// Optional: log to an analytics service
+		console.error("App error caught by ErrorBoundary:", error, info);
+	}
+
+	handleRetry = () => {
+		this.setState({ hasError: false, error: undefined });
+	};
+
+	render() {
+		if (this.state.hasError) {
+			return (
+				<div className="w-screen h-screen overflow-hidden relative flex items-center justify-center bg-gradient-to-b from-blue-800 to-gray-900 text-white p-6">
+					<div className="max-w-md w-full bg-white/10 backdrop-blur-md rounded-2xl p-6 shadow-2xl text-center">
+						<h1 className="text-2xl font-semibold mb-2">
+							Something went wrong
+						</h1>
+						<p className="text-sm opacity-90 mb-4">
+							An unexpected error occurred while loading this scene. This can
+							happen if a 3D asset fails to fetch (e.g., an HDRI or model file)
+							or the network hiccups.
+						</p>
+						<div className="flex items-center justify-center gap-3">
+							<button
+								onClick={this.handleRetry}
+								className="px-4 py-2 rounded-full bg-white text-black font-medium shadow">
+								Try again
+							</button>
+							<button
+								onClick={() => window.location.reload()}
+								className="px-4 py-2 rounded-full border border-white/60">
+								Reload page
+							</button>
+						</div>
+						<p className="text-xs mt-4 opacity-70">
+							If this keeps happening, please check your connection and try
+							again.
+						</p>
+					</div>
+				</div>
+			);
+		}
+		return this.props.children as React.ReactElement;
+	}
+}
 
 const RootLayout = () => {
 	const [muted, setMuted] = useState(false);
@@ -26,6 +87,8 @@ const RootLayout = () => {
 	const playing = gameContext?.playing || false;
 	const setPlaying = gameContext?.setPlaying || (() => {});
 	const isWalking = gameContext?.isWalking || false;
+
+	const visitorType = gameContext?.visitorType;
 
 	const { progress } = useProgress();
 
@@ -39,7 +102,7 @@ const RootLayout = () => {
 		} else if (hour >= 17 && hour < 19) {
 			return "bg-gradient-to-b from-pink-300 to-blue-600"; // sunset
 		} else {
-			return "bg-gradient-to-b from-blue-800 to-gray-900"; // low saturation night
+			return "bg-gradient-to-b from-blue-400 to-gray-900"; // low saturation night
 		}
 	}, []);
 
@@ -99,43 +162,54 @@ const RootLayout = () => {
 		}
 	}, [boardName, setShowCloudPopup]);
 
+	const location = useLocation();
+
 	return (
-		<div className="w-screen h-screen overflow-hidden relative">
-			<div className={`absolute inset-0 -z-10 ${skyColor}`} />
-			{!playing && <OpenScreen progress={progress} setPlaying={setPlaying} />}
-			{playing && <Outlet />}
-			{playing && (
-				<>
-					<button
-						onClick={() => setMuted(!muted)}
-						className="absolute top-4 right-4 z-[5000] bg-white/80 backdrop-blur-sm text-black px-3 py-1 rounded-full shadow-lg hover:bg-white/90 transition-colors duration-300">
-						{muted ? (
-							<Icon icon="wpf:speaker" width="26" height="26" color="#fc045c" />
-						) : (
-							<Icon
-								icon="heroicons:speaker-x-mark-20-solid"
-								width="26"
-								height="26"
-								color="red"
-							/>
-						)}
-					</button>
-					<MultipleClouds cloudTint={cloudTint} />
-					{showCloudPopup && !isWalking && <CloudPopup />}
-					{!isWalking && <DiceMore />}
-					<EndModal />
-					{boardComponents[boardName]}
-					<audio
-						ref={audioRef}
-						src="/audio/kazez.mp3"
-						autoPlay
-						loop
-						muted={muted}
-						className="opacity-0"
-					/>
-				</>
-			)}
-		</div>
+		<ErrorBoundary key={location.key}>
+			<div className="w-screen h-screen overflow-hidden relative">
+				<div className={`absolute inset-0 -z-10 ${skyColor}`} />
+				{!playing && <OpenScreen progress={progress} setPlaying={setPlaying} />}
+				{playing && <Outlet />}
+				{playing && (
+					<>
+						<button
+							onClick={() => setMuted(!muted)}
+							className="absolute top-4 right-4 z-[5000] p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg hover:bg-white/90 transition-colors duration-300">
+							{muted ? (
+								<Icon
+									icon="wpf:speaker"
+									width="26"
+									height="26"
+									color="#fc045c"
+								/>
+							) : (
+								<Icon
+									icon="heroicons:speaker-x-mark-20-solid"
+									width="26"
+									height="26"
+									color="red"
+								/>
+							)}
+						</button>
+
+						{visitorType !== "other" && <Menu />}
+						<MultipleClouds cloudTint={cloudTint} />
+						{showCloudPopup && !isWalking && <CloudPopup />}
+						{!isWalking && <DiceMore />}
+						<EndModal />
+						{boardComponents[boardName]}
+						<audio
+							ref={audioRef}
+							src="/audio/kazez.mp3"
+							autoPlay
+							loop
+							muted={muted}
+							className="opacity-0"
+						/>
+					</>
+				)}
+			</div>
+		</ErrorBoundary>
 	);
 };
 

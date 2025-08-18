@@ -11,7 +11,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 	const [isWalking, setIsWalking] = useState<boolean>(false);
 	const [visitorType, setVisitorType] = useState<
 		"recruiter" | "developer" | "other"
-	>("other");
+	>("recruiter");
 	const [loadingTextures, setLoadingTextures] = useState<boolean>(true);
 	const [showCloudPopup, setShowCloudPopup] = useState<boolean>(false);
 	const [grantedMotionPermission, setGrantedMotionPermission] =

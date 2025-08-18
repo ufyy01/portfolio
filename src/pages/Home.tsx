@@ -27,8 +27,8 @@ function Home() {
 					zoomSpeed={0.5}
 					maxPolarAngle={Math.PI / 3}
 					minPolarAngle={Math.PI / 4}
-					minAzimuthAngle={-Math.PI / 8}
-					maxAzimuthAngle={Math.PI / 8}
+					minAzimuthAngle={-Math.PI / 6}
+					maxAzimuthAngle={Math.PI / 6}
 				/>
 
 				<Float>

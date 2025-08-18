@@ -20,6 +20,7 @@ import { Casual } from "./Casual";
 // --- Context ---
 import { GameContext } from "@/context/gameContext";
 
+//preloading drei environment
 useEnvironment.preload({ preset: "sunset" });
 
 const Model = () => {
@@ -140,35 +141,35 @@ const Model = () => {
 	function meshPosition(boardPosition: number) {
 		switch (boardPosition) {
 			case 0:
-				return { position: { x: -3.5, y: 0.5, z: 3.5 }, name: "start" };
+				return { position: { x: -3.5, y: 0.1, z: 3.5 }, name: "start" };
 			case 1:
-				return { position: { x: -1, y: 0.5, z: 3.5 }, name: "rollAgain" };
+				return { position: { x: -1, y: 0.1, z: 3.5 }, name: "rollAgain" };
 			case 2:
-				return { position: { x: 1, y: 0.5, z: 3.5 }, name: "about" };
+				return { position: { x: 1, y: 0.1, z: 3.5 }, name: "about" };
 			case 3:
-				return { position: { x: 3.2, y: 0.5, z: 3.5 }, name: "laptop" };
+				return { position: { x: 3.2, y: 0.1, z: 3.5 }, name: "laptop" };
 			case 4:
-				return { position: { x: 3, y: 0.5, z: 2 }, name: "skills" };
+				return { position: { x: 3, y: 0.1, z: 1 }, name: "skills" };
 			case 5:
-				return { position: { x: 3, y: 0.5, z: 0 }, name: "projects" };
+				return { position: { x: 3, y: 0.1, z: -1 }, name: "projects" };
 			case 6:
-				return { position: { x: 3, y: 0.5, z: -3 }, name: "backToStart" };
+				return { position: { x: 3, y: 0.1, z: -3 }, name: "backToStart" };
 			case 7:
-				return { position: { x: 1, y: 0.5, z: -3 }, name: "headset" };
+				return { position: { x: 1, y: 0.1, z: -3 }, name: "headset" };
 			case 8:
-				return { position: { x: -1, y: 0.5, z: -3 }, name: "contact" };
+				return { position: { x: -1, y: 0.1, z: -3 }, name: "contact" };
 			case 9:
-				return { position: { x: -3.5, y: 0.5, z: -3 }, name: "jumpAhead" };
+				return { position: { x: -3.5, y: 0.1, z: -3 }, name: "jumpAhead" };
 			case 10:
-				return { position: { x: -3.5, y: 0.5, z: -1 }, name: "controller" };
+				return { position: { x: -3.5, y: 0.1, z: -1 }, name: "controller" };
 			case 11:
-				return { position: { x: -3.5, y: 0.5, z: 1.5 }, name: "resume" };
+				return { position: { x: -3.5, y: 0.1, z: 1.5 }, name: "resume" };
 			case 12:
-				return { position: { x: -3.5, y: 0.5, z: 3.5 }, name: "gameOver" };
+				return { position: { x: -3.5, y: 0.1, z: 3.5 }, name: "gameOver" };
 			case 13:
-				return { position: { x: 0, y: 0.5, z: 0 }, name: "special" };
+				return { position: { x: 0, y: 0.1, z: 0 }, name: "special" };
 			default:
-				return { position: { x: -3.5, y: 0.5, z: 3.5 }, name: "default" };
+				return { position: { x: -3.5, y: 0.1, z: 3.5 }, name: "default" };
 		}
 	}
 
@@ -870,7 +871,7 @@ const Model = () => {
 			{visitorType === "recruiter" && (
 				<Formal
 					ref={meshRef}
-					position={[-3.5, 0.5, 3.5]}
+					position={[-3.5, 0.1, 3.5]}
 					castShadow
 					receiveShadow
 				/>
@@ -878,7 +879,7 @@ const Model = () => {
 			{visitorType === "developer" && (
 				<Dev
 					ref={meshRef}
-					position={[-3.5, 0.5, 3.5]}
+					position={[-3.5, 0.1, 3.5]}
 					castShadow
 					receiveShadow
 				/>
@@ -886,7 +887,7 @@ const Model = () => {
 			{visitorType === "other" && (
 				<Casual
 					ref={meshRef}
-					position={[-3.5, 0.5, 3.5]}
+					position={[-3.5, 0.1, 3.5]}
 					castShadow
 					receiveShadow
 				/>

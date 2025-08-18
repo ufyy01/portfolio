@@ -18,6 +18,8 @@ const CloudPopup = () => {
 
 	const gameContext = useContext(GameContext);
 
+	const visitorType = gameContext?.visitorType;
+
 	const popupRef = useRef<HTMLDivElement>(null);
 
 	const [bgLoaded, setBgLoaded] = useState(false);
@@ -134,43 +136,85 @@ const CloudPopup = () => {
     <p>What technologies do you enjoy working with?</p>`,
 	];
 
-	const message = [
-		{
-			name: "default",
-			title: "Welcome!",
-			text: isMobile
-				? `<p>Hi there, I'm Ufuoma. <br />
+	// Compose visitor-type intro + control instructions
+	const controlsMobile = `<p>Hi there, I'm Ufuoma. <br />
       Welcome to the game! <br />
       Tap the Dice to start rolling!. <br />
       Make sure to <span class="font-bold text-orange-400">grant gesture access</span> so you can <span class="font-bold text-orange-400">SHAKE </span> your phone to roll the dice!</p>
-      <p > You can use <span class="font-bold text-orange-400">two fingers to zoom into and out and to pan left and right</span> of the board for a custom experience!</p>`
-				: `<p>Hi there, I'm Ufuoma. <br />
+      <p > You can use <span class="font-bold text-orange-400">two fingers to zoom into and out and to pan left and right</span> of the board for a custom experience!</p>`;
+
+	const controlsDesktop = `<p>Hi there, I'm Ufuoma. <br />
       Welcome to the game! 
       Click the Dice to start rolling!</p>
-       <p > You can use your mouse or trackpad to <br /> <span class="font-bold text-orange-400"> zoom into and out and to pan left and right</span> of the board for a custom experience!</p>
-      `,
+       <p > You can use your mouse or trackpad to <br /> <span class="font-bold text-orange-400"> zoom into and out and to pan left and right</span> of the board for a custom experience!</p>`;
+
+	const baseControls = isMobile ? controlsMobile : controlsDesktop;
+
+	let typeIntro = "";
+	if (visitorType === "recruiter") {
+		typeIntro = `<p>Quickly scan highlights, view my <strong>resume</strong>, and see key skills in the menu. </p>`;
+	} else if (visitorType === "developer") {
+		typeIntro = `<p>Explore my stack, repos, and playgrounds.</p>`;
+	} else {
+		typeIntro = `<p>Have fun exploring my world.</p>`;
+	}
+
+	const welcomeText = `${baseControls}${typeIntro}`;
+
+	const message = [
+		{
+			name: "default",
+			title:
+				visitorType === "recruiter"
+					? "Welcome Recruiter!"
+					: visitorType === "developer"
+					? "Hey Developer!"
+					: "Welcome!",
+			text: welcomeText,
 		},
 		{
 			name: "rollAgain",
-			title: "Roll Again!",
-			text: `<p>The odds are in your favor! <br />
-      ${
-				isMobile && grantedMotionPermission
-					? "Shake"
-					: isMobile
-					? "Tap"
-					: "Click"
-			} the Dice to roll again!
-    </p>`,
+			text:
+				visitorType === "recruiter"
+					? `<p>Ready to see more of my technical journey? <br />
+					${
+						isMobile && grantedMotionPermission
+							? "Shake"
+							: isMobile
+							? "Tap"
+							: "Click"
+					} the Dice to explore further!</p>`
+					: visitorType === "developer"
+					? `<p>Want to check out more tech fun? <br />
+					${
+						isMobile && grantedMotionPermission
+							? "Shake"
+							: isMobile
+							? "Tap"
+							: "Click"
+					} the Dice to dive deeper!</p>`
+					: `<p>The odds are in your favor! <br />
+					${
+						isMobile && grantedMotionPermission
+							? "Shake"
+							: isMobile
+							? "Tap"
+							: "Click"
+					} the Dice to roll again!</p>`,
 		},
 		{
 			name: "about",
 			title: "About Me",
-			text: `<p>Hi, I'm Ufuoma! I'm a software developer passionate about creating engaging and interactive experiences.  </p>`,
+			text:
+				visitorType === "recruiter"
+					? `<p>Hi, I'm Ufuoma! I'm a dedicated software developer with a proven track record in building interactive and scalable applications. Explore this board to quickly understand my expertise and career highlights.</p>`
+					: visitorType === "developer"
+					? `<p>Hey, I'm Ufuoma! I love geeking out over code, experimenting with frameworks, and sharing fun tech experiments. Let's talk about stacks, projects, and cool tools!</p>`
+					: `<p>Hi, I'm Ufuoma! I'm a software developer passionate about creating engaging and interactive experiences. Welcome to my world — feel free to explore!</p>`,
 		},
 		{
 			name: "laptop",
-			title: "Tech Stack",
+			title: "Tech Stuff",
 			text: techStackMessage[
 				Math.floor(Math.random() * techStackMessage.length)
 			],
@@ -178,12 +222,22 @@ const CloudPopup = () => {
 		{
 			name: "skills",
 			title: "Skills",
-			text: `<p>I have a diverse skill set that includes web development, design, and more. Let's roll the dice to see what skill you'll learn about next!</p>`,
+			text:
+				visitorType === "recruiter"
+					? `<p>My skills span frontend and backend development, with strengths in JavaScript, TypeScript, React, and Node.js. You’ll also find design and problem‑solving abilities highlighted here.</p>`
+					: visitorType === "developer"
+					? `<p>I work with stacks like React, Next.js, Node.js, and TypeScript. I’m into exploring new libraries, frameworks, and building fun side projects too!</p>`
+					: `<p>I have a diverse skill set that includes web development, design, and more. Let's roll the dice to see what skill you'll learn about next!</p>`,
 		},
 		{
 			name: "projects",
 			title: "Projects",
-			text: `<p>Check out some of my projects. Each one is a unique adventure waiting to be explored!</p>`,
+			text:
+				visitorType === "recruiter"
+					? `<p>Here are some of my key projects that showcase my ability to deliver results, solve problems, and add value to teams. Each project highlights professional growth and impact.</p>`
+					: visitorType === "developer"
+					? `<p>Check out my projects — from experiments with frameworks to fun side builds. Dive in to see code, stacks, and ideas I’ve been exploring!</p>`
+					: `<p>Check out some of my projects. Each one is a unique adventure waiting to be explored!</p>`,
 		},
 		{
 			name: "backToStart",
@@ -200,7 +254,12 @@ const CloudPopup = () => {
 		{
 			name: "contact",
 			title: "Contact Me",
-			text: `<p>Let's create something amazing together!</p>`,
+			text:
+				visitorType === "recruiter"
+					? `<p>Interested in discussing opportunities? Reach out and let’s talk about how I can add value to your team.</p>`
+					: visitorType === "developer"
+					? `<p>Got an idea, repo, or side project? Let’s connect and maybe collaborate!</p>`
+					: `<p>Let's create something amazing together!</p>`,
 		},
 		{
 			name: "controller",
@@ -210,7 +269,12 @@ const CloudPopup = () => {
 		{
 			name: "resume",
 			title: "Resume",
-			text: `<p>Check out my resume to see my professional journey and accomplishments.</p>`,
+			text:
+				visitorType === "recruiter"
+					? `<p>Here’s my resume — a quick way to view my work experience, skills, and achievements tailored for hiring decisions.</p>`
+					: visitorType === "developer"
+					? `<p>Take a look at my resume to see the projects, tools, and stacks I’ve worked with in depth.</p>`
+					: `<p>Check out my resume to see my professional journey and accomplishments.</p>`,
 		},
 	];
 

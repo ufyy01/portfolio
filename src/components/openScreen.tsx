@@ -54,9 +54,9 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 		} else if (hour >= 9 && hour < 17) {
 			return "bg-blue-300"; // daytime
 		} else if (hour >= 17 && hour < 19) {
-			return "bg-gradient-to-b from-pink-300 to-blue-600"; // sunset
+			return "bg-gradient-to-b from-pink-300 to-blue-500"; // sunset
 		} else {
-			return "bg-gradient-to-b from-blue-800 to-gray-900"; // low saturation night
+			return "bg-gradient-to-b from-blue-400 to-gray-900"; // low saturation night
 		}
 	}, []);
 
@@ -74,16 +74,22 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 		}
 	}, []);
 
-	// const handleSpinIntro = () => {
-	// 	if (introRef.current && rootRef.current) {
-	// 		const tl = gsap.timeline();
-	// 		tl.to(introRef.current, {
-	// 			opacity: 0,
-	// 			duration: 0.6,
-	// 			transformOrigin: "50% 50%",
-	// 		});
-	// 	}
-	// };
+	const isNight = useMemo(() => {
+		const hour = new Date().getHours();
+		return !(hour >= 6 && hour < 19);
+	}, []);
+
+	const stars = useMemo(
+		() =>
+			Array.from({ length: 120 }, () => ({
+				top: Math.random() * 100,
+				left: Math.random() * 100,
+				size: Math.random() < 0.8 ? 2 : 3,
+				delay: Math.random() * 3,
+				opacity: 0.6 + Math.random() * 0.4,
+			})),
+		[]
+	);
 
 	const handleSpinKnow = () => {
 		if (knowRef.current && rootRef.current) {
@@ -159,20 +165,29 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 		}
 	}, []);
 
-	// useEffect(() => {
-	// 	if (doIknowYou) {
-	// 		setShowScrollHint(true);
-	// 		const timer = setTimeout(() => {
-	// 			setShowScrollHint(false);
-	// 		}, 4000);
-	// 		return () => clearTimeout(timer);
-	// 	}
-	// }, [doIknowYou]);
-
 	return (
 		<div
 			ref={rootRef}
 			className={`h-screen w-screen ${skyColor} relative overflow-hidden flex justify-center items-center`}>
+			{isNight && (
+				<div className="pointer-events-none absolute inset-0 z-[0] overflow-hidden">
+					{stars.map((s, i) => (
+						<div
+							key={i}
+							className="absolute rounded-full bg-white animate-pulse"
+							style={{
+								top: `${s.top}%`,
+								left: `${s.left}%`,
+								width: `${s.size}px`,
+								height: `${s.size}px`,
+								opacity: s.opacity,
+								animationDuration: "2.2s",
+								animationDelay: `${s.delay}s`,
+							}}
+						/>
+					))}
+				</div>
+			)}
 			<div
 				ref={containerRef}
 				className="w-full h-full absolute overflow-hidden">
@@ -182,13 +197,16 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 							key={index}
 							src={src}
 							alt={`Cloud ${index + 1}`}
-							className={`absolute w-[100%] xl:w-[50%] cloud-img ${cloudTint}`}
+							className={`absolute bg-blend-overlay w-[100%] xl:w-[50%] cloud-img ${cloudTint}`}
 							style={{
 								top:
 									index % 2 === 0
-										? `calc(${20 + index * 10}%)`
+										? `calc(${20 + index * 5}%)`
 										: `calc(${-20 + index * 10}%)`,
-								left: `calc(${20 + index * 10}%)`,
+								left:
+									index % 2 === 0
+										? `calc(${20 + index * 10}%)`
+										: `calc(${-20 + index * 5}%)`,
 								transform: "translateX(-50%)",
 							}}
 						/>
@@ -197,79 +215,14 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 			</div>
 
 			<div
-				className="px-5 py-8 bg-gradient-to-br from-pink-600 to-blue-300 rounded-lg shadow-lg  w-11/12 lg:w-8/12 xl:w-6/12 2xl:w-1/3 mx-auto h-8/12 md:h-fit text-white pb-5"
+				className="px-5 py-8 bg-gradient-to-br from-pink-400/80 to-blue-300 rounded-lg shadow-lg  w-11/12 lg:w-8/12 xl:w-6/12 2xl:w-1/3 mx-auto h-8/12 md:h-fit text-white pb-5"
 				ref={knowRef}>
-				{/* {!doIknowYou && (
-					<div
-						ref={introRef}
-						className="space-y-4 overflow-y-scroll md:overflow-hidden text-pretty h-full w-full">
-						<p className="font-fraunces italic text-4xl text-orange-200 text-center">
-							Welcome!
-						</p>
-						<p className="w-11/12 mx-auto text-center md:text-start">
-							Somewhere high above the noise of the internet, where clouds drift
-							like thoughts and the code hums softly in the air… A magical board
-							floats, suspended in the sky, waiting for you.. <br />
-							<span className="font-fraunces text-accent italic text-lg">
-								Ufylandia
-							</span>{" "}
-							✨ a soft, sparkling world handcrafted by a tinkering software
-							engineer named{" "}
-							<span className="font-fraunces text-accent italic text-lg">
-								Ufuoma.
-							</span>{" "}
-							<br />
-							She built it from pastel dreams, late-night bugs, and love for the
-							little things.
-						</p>
-						<p className="w-11/12 mx-auto text-center md:text-start">
-							Whether you’re a recruiter seeking talent, a fellow developer
-							looking for kindred code, or just a curious wanderer…
-						</p>
-						<ul className="ms-8  space-y-2">
-							<li className="text-orange-200 text-lg">🎲 Roll the dice</li>
-							<li className="text-orange-200 text-lg">✨ Unlock her journey</li>
-							<li className="text-orange-200 text-lg">
-								🧩 Collect little surprises as you go
-							</li>
-						</ul>
-						<p className="w-11/12 mx-auto text-center">
-							Just make sure to avoid the traps. 🙊
-						</p>
-						<div className="flex justify-center">
-							<Button
-								size="lg"
-								className="bg-white relative z-[200] "
-								onClick={() => {
-									handleSpinIntro();
-									setTimeout(() => {
-										setDoIknowYou(true);
-									}, 500);
-								}}>
-								<Icon
-									icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-									width="50"
-									height="50"
-									color="#fc045c"
-									className="w-12 h-12 mr-2"
-								/>
-								<p className="font-fraunces italic text-2xl text-[#fc045c]">
-									Continue
-								</p>
-							</Button>
-						</div>
-					</div>
-				)} */}
 				<div className="space-y-4 overflow-y-scroll md:overflow-hidden text-pretty w-full h-full">
-					<p className="font-fraunces italic text-4xl text-orange-200 text-center">
-						Welcome! Can I know you?
+					<p className="font-fraunces italic text-4xl text-white ms-4 text-center md:text-start">
+						Welcome! can I know you?
 					</p>
 					<p className="w-11/12 mx-auto text-center md:text-start">
-						I’m{" "}
-						<span className="font-fraunces text-accent italic text-lg">
-							Ufuoma
-						</span>
-						, a software developer with a soft spot for storytelling,
+						I’m Ufuoma, a software developer with a soft spot for storytelling,
 						interactivity, and joyful user experiences. I don’t just build
 						projects... I build experiences that resonate, connect, and inspire.
 					</p>
@@ -285,28 +238,28 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 
 					<div className="w-full flex flex-col items-center space-y-4">
 						<Button
-							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
+							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 ${
 								visitorType === "recruiter"
-									? "bg-blue-500 text-white"
-									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
+									? "bg-[#481145] text-white"
+									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
 							}`}
 							onClick={() => setVisitorType!("recruiter")}>
 							I am a recruiter
 						</Button>
 						<Button
-							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
+							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 ${
 								visitorType === "developer"
-									? "bg-blue-500 text-white"
-									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
+									? "bg-[#481145] text-white"
+									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
 							}`}
 							onClick={() => setVisitorType!("developer")}>
 							I am a developer
 						</Button>
 						<Button
-							className={`text-xl font-fraunces italic w-10/12 mx-auto mb-4 ${
+							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 ${
 								visitorType === "other"
-									? "bg-blue-500 text-white"
-									: "bg-gradient-to-r from-pink-500 to-blue-500 text-orange-200"
+									? "bg-[#481145] text-white"
+									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
 							}`}
 							onClick={() => setVisitorType!("other")}>
 							I am a casual visitor
@@ -336,7 +289,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 							<p className="font-fraunces italic text-2xl text-[#fc045c]">
 								{loadingTextures && progress < 100
 									? `Loading... ${Math.round(progress)}%`
-									: "Click here to explore!"}
+									: "Click here to explore"}
 							</p>
 						</Button>
 					</div>
