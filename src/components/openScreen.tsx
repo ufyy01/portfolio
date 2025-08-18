@@ -92,16 +92,30 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 	);
 
 	const handleSpinKnow = () => {
+		if (knowRef.current) {
+			gsap.set(knowRef.current, {
+				willChange: "transform, opacity",
+				force3D: true,
+				backfaceVisibility: "hidden",
+			});
+		}
+		if (rootRef.current) {
+			gsap.set(rootRef.current, {
+				willChange: "opacity, transform",
+				force3D: true,
+			});
+		}
 		if (knowRef.current && rootRef.current) {
 			const tl = gsap.timeline();
 			tl.to(knowRef.current, {
 				rotationY: "+=360",
 				duration: 0.6,
 				transformOrigin: "50% 50%",
+				force3D: true,
 			}).to(
 				rootRef.current,
 				{
-					opacity: 0,
+					autoAlpha: 0,
 					duration: 0.5,
 					ease: "power1.out",
 				},
@@ -238,7 +252,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 
 					<div className="w-full flex flex-col items-center space-y-4">
 						<Button
-							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 ${
+							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 will-change-auto ${
 								visitorType === "recruiter"
 									? "bg-[#481145] text-white"
 									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
@@ -247,7 +261,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 							I am a recruiter
 						</Button>
 						<Button
-							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 ${
+							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 will-change-auto ${
 								visitorType === "developer"
 									? "bg-[#481145] text-white"
 									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
@@ -256,7 +270,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 							I am a developer
 						</Button>
 						<Button
-							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 ${
+							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 will-change-auto ${
 								visitorType === "other"
 									? "bg-[#481145] text-white"
 									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
@@ -309,7 +323,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 			<div
 				ref={continuousRef}
 				className="w-screen h-fit absolute -top-10 left-0 z-[100]">
-				{images.splice(0, 1).map((src, index) => {
+				{images.slice(0, 1).map((src, index) => {
 					return (
 						<img
 							key={index}

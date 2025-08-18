@@ -174,6 +174,7 @@ const CloudPopup = () => {
 		},
 		{
 			name: "rollAgain",
+			title: "Roll Again!",
 			text:
 				visitorType === "recruiter"
 					? `<p>Ready to see more of my technical journey? <br />
