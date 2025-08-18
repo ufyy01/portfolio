@@ -233,7 +233,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 				ref={knowRef}>
 				<div className="space-y-4 overflow-y-scroll md:overflow-hidden text-pretty w-full h-full">
 					<p className="font-fraunces italic text-4xl text-white ms-4 text-center md:text-start">
-						Welcome! can I know you?
+						Welcome! Can I know you?
 					</p>
 					<p className="w-11/12 mx-auto text-center md:text-start">
 						I’m Ufuoma, a software developer with a soft spot for storytelling,

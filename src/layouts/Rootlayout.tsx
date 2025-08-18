@@ -17,6 +17,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 import DiceMore from "@/components/diceMore";
 import EndModal from "@/components/endModal";
 import Menu from "@/components/menu";
+import Seo from "@/components/Seo";
 
 class ErrorBoundary extends React.Component<
 	{ children: React.ReactNode },
@@ -165,51 +166,56 @@ const RootLayout = () => {
 	const location = useLocation();
 
 	return (
-		<ErrorBoundary key={location.key}>
-			<div className="w-screen h-screen overflow-hidden relative">
-				<div className={`absolute inset-0 -z-10 ${skyColor}`} />
-				{!playing && <OpenScreen progress={progress} setPlaying={setPlaying} />}
-				{playing && <Outlet />}
-				{playing && (
-					<>
-						<button
-							onClick={() => setMuted(!muted)}
-							className="absolute top-4 right-4 z-[5000] p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg hover:bg-white/90 transition-colors duration-300">
-							{muted ? (
-								<Icon
-									icon="wpf:speaker"
-									width="26"
-									height="26"
-									color="#fc045c"
-								/>
-							) : (
-								<Icon
-									icon="heroicons:speaker-x-mark-20-solid"
-									width="26"
-									height="26"
-									color="red"
-								/>
-							)}
-						</button>
+		<>
+			<Seo />
+			<ErrorBoundary key={location.key}>
+				<div className="w-screen h-screen overflow-hidden relative">
+					<div className={`absolute inset-0 -z-10 ${skyColor}`} />
+					{!playing && (
+						<OpenScreen progress={progress} setPlaying={setPlaying} />
+					)}
+					{playing && <Outlet />}
+					{playing && (
+						<>
+							<button
+								onClick={() => setMuted(!muted)}
+								className="absolute top-4 right-4 z-[5000] p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg hover:bg-white/90 transition-colors duration-300">
+								{muted ? (
+									<Icon
+										icon="wpf:speaker"
+										width="26"
+										height="26"
+										color="#fc045c"
+									/>
+								) : (
+									<Icon
+										icon="heroicons:speaker-x-mark-20-solid"
+										width="26"
+										height="26"
+										color="red"
+									/>
+								)}
+							</button>
 
-						{visitorType !== "other" && <Menu />}
-						<MultipleClouds cloudTint={cloudTint} />
-						{showCloudPopup && !isWalking && <CloudPopup />}
-						{!isWalking && <DiceMore />}
-						<EndModal />
-						{boardComponents[boardName]}
-						<audio
-							ref={audioRef}
-							src="/audio/kazez.mp3"
-							autoPlay
-							loop
-							muted={muted}
-							className="opacity-0"
-						/>
-					</>
-				)}
-			</div>
-		</ErrorBoundary>
+							{visitorType !== "other" && <Menu />}
+							<MultipleClouds cloudTint={cloudTint} />
+							{showCloudPopup && !isWalking && <CloudPopup />}
+							{!isWalking && <DiceMore />}
+							<EndModal />
+							{boardComponents[boardName]}
+							<audio
+								ref={audioRef}
+								src="/audio/kazez.mp3"
+								autoPlay
+								loop
+								muted={muted}
+								className="opacity-0"
+							/>
+						</>
+					)}
+				</div>
+			</ErrorBoundary>
+		</>
 	);
 };
 
