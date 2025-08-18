@@ -229,30 +229,30 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 			</div>
 
 			<div
-				className="px-5 py-8 bg-gradient-to-br from-pink-400/80 to-blue-300 rounded-lg shadow-lg  w-11/12 lg:w-8/12 xl:w-6/12 2xl:w-1/3 mx-auto h-8/12 md:h-fit text-white pb-5"
+				className="px-5 py-8 bg-gradient-to-br from-pink-400/80 to-blue-300 rounded-lg shadow-lg  w-11/12 lg:w-8/12 xl:w-6/12 2xl:w-1/3 max-w-[550px]  mx-auto h-8/12 md:h-fit text-white pb-5"
 				ref={knowRef}>
-				<div className="space-y-4 overflow-y-scroll md:overflow-hidden text-pretty w-full h-full">
-					<p className="font-fraunces italic text-4xl text-white ms-4 text-center md:text-start">
+				<div className="w-11/12 mx-auto space-y-4 overflow-y-scroll md:overflow-hidden text-pretty h-full">
+					<p className="font-fraunces italic text-4xl text-white text-center md:text-start">
 						Welcome! Can I know you?
 					</p>
-					<p className="w-11/12 mx-auto text-center md:text-start">
+					<p className=" text-center md:text-start">
 						I’m Ufuoma, a software developer with a soft spot for storytelling,
 						interactivity, and joyful user experiences. I don’t just build
 						projects... I build experiences that resonate, connect, and inspire.
 					</p>
-					<p className="w-11/12 mx-auto text-center md:text-start">
+					<p className="  text-center md:text-start">
 						Thank you for visiting my little corner of the internet! I’m
 						thrilled to have you here. <br />
 					</p>
 
-					<p className="w-11/12 mx-auto text-center md:text-start">
+					<p className=" text-center md:text-start">
 						I'll love to look my best to make your visit worthwhile. <br />{" "}
 						Select the option that best describes you 👇🏾
 					</p>
 
 					<div className="w-full flex flex-col items-center space-y-4">
 						<Button
-							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 will-change-auto ${
+							className={`text-xl font-fraunces italic w-full mx-auto mb-4 will-change-auto ${
 								visitorType === "recruiter"
 									? "bg-[#481145] text-white"
 									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
@@ -261,7 +261,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 							I am a recruiter
 						</Button>
 						<Button
-							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 will-change-auto ${
+							className={`text-xl font-fraunces italic w-full mx-auto mb-4 will-change-auto ${
 								visitorType === "developer"
 									? "bg-[#481145] text-white"
 									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
@@ -270,7 +270,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 							I am a developer
 						</Button>
 						<Button
-							className={`text-xl font-fraunces italic w-11/12 mx-auto mb-4 will-change-auto ${
+							className={`text-xl font-fraunces italic w-full mx-auto mb-4 will-change-auto ${
 								visitorType === "other"
 									? "bg-[#481145] text-white"
 									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
