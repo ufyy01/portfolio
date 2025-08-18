@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import { Button } from "./ui/button";
+import { GameContext } from "@/context/gameContext";
 
 const GRID_SIZE = 10;
 const HIDDEN_WORDS = [
@@ -35,6 +36,72 @@ const HIDDEN_WORDS = [
 	"save",
 ];
 
+const HIDDEN_WORDS_RECRUITER = [
+	"loyal",
+	"trust",
+	"adapt",
+	"skill",
+	"team",
+	"focus",
+	"drive",
+	"honest",
+	"creative",
+	"growth",
+	"learn",
+	"leader",
+	"vision",
+	"reliable",
+	"dedicate",
+	"detail",
+	"ethic",
+	"support",
+	"respect",
+	"mentor",
+	"curious",
+	"innovate",
+	"commit",
+	"energy",
+	"humble",
+	"patient",
+	"clarity",
+	"result",
+	"depend",
+	"talent",
+];
+
+const HIDDEN_WORDS_OTHER = [
+	"home",
+	"book",
+	"food",
+	"love",
+	"play",
+	"tree",
+	"rain",
+	"song",
+	"cake",
+	"bird",
+	"fish",
+	"road",
+	"star",
+	"game",
+	"smile",
+	"sun",
+	"moon",
+	"milk",
+	"ball",
+	"walk",
+	"cat",
+	"dog",
+	"shoe",
+	"cup",
+	"bed",
+	"phone",
+	"car",
+	"tv",
+	"pen",
+	"bag",
+];
+
 type Cell = {
 	letter: string;
 	row: number;
@@ -45,7 +112,7 @@ type Cell = {
 const generateRandomLetter = () =>
 	String.fromCharCode(65 + Math.floor(Math.random() * 26));
 
-const createGrid = (): Cell[][] => {
+const createGrid = (WORDS: string[]): Cell[][] => {
 	const emptyChar = "";
 	const grid: string[][] = Array(GRID_SIZE)
 		.fill(null)
@@ -96,7 +163,7 @@ const createGrid = (): Cell[][] => {
 		return false;
 	};
 
-	HIDDEN_WORDS.forEach((word) => placeWord(word));
+	WORDS.forEach((word) => placeWord(word));
 
 	// Fill remaining cells
 	const finalGrid: Cell[][] = grid.map((row, rIdx) =>
@@ -149,7 +216,17 @@ type WordShuffleProps = {
 };
 
 const WordShuffle = ({ setGame }: WordShuffleProps) => {
-	const [grid, setGrid] = useState<Cell[][]>(createGrid);
+	const gameContext = useContext(GameContext);
+	const visitorType = gameContext?.visitorType;
+
+	const ACTIVE_WORDS =
+		visitorType === "recruiter"
+			? HIDDEN_WORDS_RECRUITER
+			: visitorType === "developer"
+			? HIDDEN_WORDS
+			: HIDDEN_WORDS_OTHER;
+
+	const [grid, setGrid] = useState<Cell[][]>(() => createGrid(ACTIVE_WORDS));
 	const [selectedPath, setSelectedPath] = useState<[number, number][]>([]);
 	const [foundWords, setFoundWords] = useState<string[]>([]);
 	const [isMouseDown, setIsMouseDown] = useState(false);
@@ -159,7 +236,7 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 	const gridRef = useRef<HTMLDivElement | null>(null);
 
 	const resetGame = () => {
-		setGrid(createGrid());
+		setGrid(createGrid(ACTIVE_WORDS));
 		setSelectedPath([]);
 		setFoundWords([]);
 		setTimeLeft(80);
@@ -203,7 +280,7 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 			.join("")
 			.toLowerCase();
 
-		if (HIDDEN_WORDS.includes(word) && !foundWords.includes(word)) {
+		if (ACTIVE_WORDS.includes(word) && !foundWords.includes(word)) {
 			setFoundWords([...foundWords, word]);
 			// Mark each selected cell as found
 			setGrid((prevGrid) =>
@@ -236,12 +313,12 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 	}, [isMouseDown]);
 
 	useEffect(() => {
-		if (foundWords.length === HIDDEN_WORDS.length) {
+		if (foundWords.length === ACTIVE_WORDS.length) {
 			setGameOver(true);
 		}
-	}, [foundWords]);
+	}, [foundWords, ACTIVE_WORDS.length]);
 
-	const allFound = foundWords.length === HIDDEN_WORDS.length;
+	const allFound = foundWords.length === ACTIVE_WORDS.length;
 
 	return (
 		<div className="fixed inset-0 z-[2000] bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
@@ -262,10 +339,10 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 							⏱ {timeLeft}
 						</span>
 						<span className="px-3 py-1 rounded-md bg-slate-800 text-white">
-							Found: {foundWords.length}/{HIDDEN_WORDS.length}
+							Found: {foundWords.length}/{ACTIVE_WORDS.length}
 						</span>
 						<span className="px-3 py-1 rounded-md bg-slate-700 text-white">
-							Left: {HIDDEN_WORDS.length - foundWords.length}
+							Left: {ACTIVE_WORDS.length - foundWords.length}
 						</span>
 						<button
 							onClick={resetGame}
