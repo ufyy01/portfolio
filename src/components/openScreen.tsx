@@ -210,10 +210,10 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 	return (
 		<div
 			ref={rootRef}
-			className={`h-screen w-screen ${skyColor} ${
-				isNight ? "bg-gray-900" : ""
-			} relative overflow-hidden flex justify-center items-center`}
-			style={{ backgroundColor: getFallbackColor() }}>
+			className={`h-screen w-screen ${skyColor} relative overflow-hidden flex justify-center items-center`}
+			style={
+				isLowEndAndroid ? { backgroundColor: getFallbackColor() } : undefined
+			}>
 			{isNight && (
 				<div className="pointer-events-none absolute inset-0 z-[0] overflow-hidden">
 					{stars.map((s, i) => (
@@ -262,7 +262,11 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 			</div>
 
 			<div
-				className="px-5 py-8 bg-gradient-to-br from-pink-400/80 to-blue-300 rounded-lg shadow-lg  w-11/12 lg:w-8/12 xl:w-6/12 2xl:w-1/3 max-w-[550px]  mx-auto h-8/12 md:h-fit text-white pb-5"
+				className={`${
+					isLowEndAndroid
+						? "bg-pink-400/80"
+						: "bg-gradient-to-br from-pink-400/80 to-blue-300"
+				} px-5 py-8   rounded-lg shadow-lg  w-11/12 lg:w-8/12 xl:w-6/12 2xl:w-1/3 max-w-[550px]  mx-auto h-8/12 md:h-fit text-white pb-5`}
 				ref={knowRef}>
 				<div className="w-11/12 mx-auto space-y-4 overflow-y-scroll md:overflow-hidden text-pretty h-full">
 					<p className="font-fraunces italic text-4xl text-white text-center md:text-start">

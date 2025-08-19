@@ -93,6 +93,15 @@ const RootLayout = () => {
 
 	const { progress } = useProgress();
 
+	// Basic low-end Android detection to lighten the scene
+	const isLowEndAndroid = useMemo(() => {
+		if (typeof navigator === "undefined") return false;
+		const m = navigator.userAgent.match(/Android\s(\d+)/i);
+		if (!m) return false;
+		const major = parseInt(m[1], 10);
+		return Number.isFinite(major) && major <= 7; // treat Android 7 and below as low-end for safety
+	}, []);
+
 	const skyColor = useMemo(() => {
 		const hour = new Date().getHours();
 
@@ -106,6 +115,14 @@ const RootLayout = () => {
 			return "bg-gradient-to-b from-blue-400 to-gray-900"; // low saturation night
 		}
 	}, []);
+
+	function getFallbackColor() {
+		const hour = new Date().getHours();
+		if (hour >= 6 && hour < 9) return "#fed7aa"; // sunrise (orange-200)
+		if (hour >= 9 && hour < 17) return "#93c5fd"; // daytime (blue-300)
+		if (hour >= 17 && hour < 19) return "#93c5fd"; // sunset mid blend base
+		return "#1f2937"; // night (gray-800)
+	}
 
 	const boardComponents: Record<string, ReactElement> = {
 		contact: <Contact />,
@@ -170,7 +187,14 @@ const RootLayout = () => {
 			<Seo />
 			<ErrorBoundary key={location.key}>
 				<div className="w-screen h-screen overflow-hidden relative">
-					<div className={`absolute inset-0 -z-10 ${skyColor}`} />
+					<div
+						className={`absolute inset-0 -z-10 ${skyColor}`}
+						style={
+							isLowEndAndroid
+								? { backgroundColor: getFallbackColor() }
+								: undefined
+						}
+					/>
 					{!playing && (
 						<OpenScreen progress={progress} setPlaying={setPlaying} />
 					)}
