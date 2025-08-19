@@ -323,8 +323,8 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 	return (
 		<div className="fixed inset-0 z-[2000] bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
 			<div className="z-[2500]">
-				<div className="w-full max-w-3xl flex items-center justify-between px-4 my-5 flex-wrap">
-					<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
+				<div className="w-full max-w-3xl flex items-center justify-between px-4 my-3 flex-wrap">
+					<h2 className="text-2xl lg:text-3xl font-fraunces italic my-4 text-orange-400">
 						Word Shuffle
 					</h2>
 					<div className="flex items-center gap-3">
@@ -352,10 +352,7 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 					</div>
 				</div>
 				<div>
-					<h3 className="text-2xl font-fraunces text-white font-semibold mb-2">
-						Find the hidden words!
-					</h3>
-					<p className="text-lg text-white mb-4">
+					<p className="text-base text-white mb-2">
 						Click and hold, then drag across adjacent letters
 						(up/down/left/right). Release to submit the word.
 					</p>
