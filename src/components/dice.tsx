@@ -62,8 +62,20 @@ const Dice = () => {
 		() => new THREE.Vector3()
 	);
 
-	const lastShakeTime = useRef(0);
-	const SHAKE_THRESHOLD = 15;
+	// Shake restraint configuration
+	const ABS_THRESHOLD = 18; // absolute g-force magnitude threshold
+	const DELTA_THRESHOLD = 6; // change vs EMA required to count as a peak
+	const MIN_PEAK_INTERVAL = 300; // ms between peaks (ignore micro jitter)
+	const PEAK_WINDOW = 800; // ms window to collect required peaks
+	const REQUIRED_PEAKS = 2; // need at least 2 peaks within window
+	const GRACE_PERIOD = 1500; // ms to ignore shakes after a roll
+
+	// State for peak/EMA logic
+	const emaRef = useRef(0);
+	const peakCountRef = useRef(0);
+	const lastPeakTimeRef = useRef(0);
+	const windowStartRef = useRef(0);
+	const ignoreUntilRef = useRef(0);
 
 	const handleRotation = useCallback(() => {
 		if (isRotating || isWalking) return;
@@ -102,22 +114,64 @@ const Dice = () => {
 
 	useEffect(() => {
 		function handleMotion(event: DeviceMotionEvent) {
-			const acc = event.accelerationIncludingGravity;
-			if (!acc) return;
-			const {
-				x = 0,
-				y = 0,
-				z = 0,
-			} = acc as { x: number; y: number; z: number };
-			const magnitude = Math.sqrt(x * x + y * y + z * z);
 			const now = Date.now();
-			if (magnitude > SHAKE_THRESHOLD && now - lastShakeTime.current > 1000) {
-				lastShakeTime.current = now;
-				handleRotation();
+			if (now < ignoreUntilRef.current) return; // grace period after a roll
+
+			// Prefer acceleration without gravity; fallback to including gravity if null
+			const acc =
+				event.acceleration &&
+				(event.acceleration.x != null ||
+					event.acceleration.y != null ||
+					event.acceleration.z != null)
+					? event.acceleration
+					: event.accelerationIncludingGravity;
+			if (!acc) return;
+
+			const x = acc.x ?? 0;
+			const y = acc.y ?? 0;
+			const z = acc.z ?? 0;
+			const magnitude = Math.sqrt(x * x + y * y + z * z);
+
+			// initialize or update exponential moving average
+			if (emaRef.current === 0) {
+				emaRef.current = magnitude;
+			} else {
+				const alpha = 0.1; // smoothness
+				emaRef.current = alpha * magnitude + (1 - alpha) * emaRef.current;
+			}
+			const delta = Math.abs(magnitude - emaRef.current);
+
+			// Peak detection with hysteresis and minimum interval
+			if (
+				magnitude > ABS_THRESHOLD &&
+				delta > DELTA_THRESHOLD &&
+				now - lastPeakTimeRef.current > MIN_PEAK_INTERVAL
+			) {
+				lastPeakTimeRef.current = now;
+
+				// start or continue the window
+				if (
+					windowStartRef.current === 0 ||
+					now - windowStartRef.current > PEAK_WINDOW
+				) {
+					windowStartRef.current = now;
+					peakCountRef.current = 1;
+				} else {
+					peakCountRef.current += 1;
+				}
+
+				// require multiple peaks to roll
+				if (peakCountRef.current >= REQUIRED_PEAKS) {
+					peakCountRef.current = 0;
+					windowStartRef.current = 0;
+					// avoid back-to-back triggers
+					ignoreUntilRef.current = now + GRACE_PERIOD;
+					handleRotation();
+				}
 			}
 		}
 
-		window.addEventListener("devicemotion", handleMotion);
+		window.addEventListener("devicemotion", handleMotion, { passive: true });
 
 		return () => {
 			window.removeEventListener("devicemotion", handleMotion);

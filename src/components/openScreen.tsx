@@ -9,9 +9,10 @@ import {
 // Extend DeviceMotionEvent to include requestPermission for iOS Safari support
 
 import gsap from "gsap";
-import { Button } from "./ui/button";
+// import { Button } from "./ui/button";
 import { Icon } from "@iconify/react";
 import { GameContext } from "@/context/gameContext";
+import { Button } from "./ui/button";
 
 interface OpenScreenProps {
 	progress: number;
@@ -251,33 +252,39 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 					</p>
 
 					<div className="w-full flex flex-col items-center space-y-4">
-						<Button
-							className={`text-xl font-fraunces italic w-full mx-auto mb-4 will-change-auto ${
-								visitorType === "recruiter"
-									? "bg-[#481145] text-white"
-									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
-							}`}
-							onClick={() => setVisitorType!("recruiter")}>
-							I am a recruiter
-						</Button>
-						<Button
-							className={`text-xl font-fraunces italic w-full mx-auto mb-4 will-change-auto ${
-								visitorType === "developer"
-									? "bg-[#481145] text-white"
-									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
-							}`}
-							onClick={() => setVisitorType!("developer")}>
-							I am a developer
-						</Button>
-						<Button
-							className={`text-xl font-fraunces italic w-full mx-auto mb-4 will-change-auto ${
-								visitorType === "other"
-									? "bg-[#481145] text-white"
-									: "bg-gradient-to-r from-pink-300 to-blue-100 text-[#481145]"
-							}`}
-							onClick={() => setVisitorType!("other")}>
-							I am a casual visitor
-						</Button>
+						<label className="flex items-center space-x-2 w-full mb-4 cursor-pointer">
+							<input
+								type="checkbox"
+								checked={visitorType === "recruiter"}
+								onChange={() => setVisitorType!("recruiter")}
+								className="form-checkbox h-5 w-5 text-pink-500"
+							/>
+							<span className="text-xl font-fraunces italic text-[#481145]">
+								I am a recruiter
+							</span>
+						</label>
+						<label className="flex items-center space-x-2 w-full mb-4 cursor-pointer">
+							<input
+								type="checkbox"
+								checked={visitorType === "developer"}
+								onChange={() => setVisitorType!("developer")}
+								className="form-checkbox h-5 w-5 text-pink-500"
+							/>
+							<span className="text-xl font-fraunces italic text-[#481145]">
+								I am a developer
+							</span>
+						</label>
+						<label className="flex items-center space-x-2 w-full mb-4 cursor-pointer">
+							<input
+								type="checkbox"
+								checked={visitorType === "other"}
+								onChange={() => setVisitorType!("other")}
+								className="form-checkbox h-5 w-5 text-pink-500"
+							/>
+							<span className="text-xl font-fraunces italic text-[#481145]">
+								I am a casual visitor
+							</span>
+						</label>
 					</div>
 
 					<div className="flex justify-center">

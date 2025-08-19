@@ -8,9 +8,10 @@ import { useFrame, useThree } from "@react-three/fiber";
 import {
 	useFBX,
 	useAnimations,
-	useEnvironment,
-	Environment,
+	// useEnvironment,
+	// Environment,
 } from "@react-three/drei";
+// import sunsetUrl from "@pmndrs/assets/hdri/venice_sunset_1k.hdr?url";
 
 // --- Internal components ---
 import { Formal } from "./formal";
@@ -21,7 +22,7 @@ import { Casual } from "./Casual";
 import { GameContext } from "@/context/gameContext";
 
 //preloading drei environment
-useEnvironment.preload({ preset: "sunset" });
+// useEnvironment.preload({ files: sunsetUrl });
 
 const Model = () => {
 	// --- Context and state ---
@@ -867,7 +868,9 @@ const Model = () => {
 	// --- Render ---
 	return (
 		<>
-			<Environment preset="sunset" />
+			{/* <Environment files={sunsetUrl} /> */}
+			<ambientLight intensity={2.5} />
+			<pointLight position={[3, 5, 5]} intensity={1} />
 			{visitorType === "recruiter" && (
 				<Formal
 					ref={meshRef}
