@@ -428,7 +428,7 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 								return (
 									<div
 										key={`${cell.row}-${cell.col}`}
-										className={`w-full aspect-square flex items-center justify-center text-xl md:text-2xl font-bold rounded cursor-pointer select-none border 
+										className={`w-full aspect-square flex items-center justify-center text-xl font-bold rounded cursor-pointer select-none border 
         ${
 					isFound
 						? "bg-green-300 text-white"
