@@ -203,22 +203,15 @@ const RootLayout = () => {
 						<>
 							<button
 								onClick={() => setMuted(!muted)}
-								className="absolute top-4 right-4 z-[5000] p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg hover:bg-white/90 transition-colors duration-300">
-								{muted ? (
-									<Icon
-										icon="wpf:speaker"
-										width="26"
-										height="26"
-										color="#fc045c"
-									/>
-								) : (
-									<Icon
-										icon="heroicons:speaker-x-mark-20-solid"
-										width="26"
-										height="26"
-										color="red"
-									/>
-								)}
+								className="absolute top-4 right-4 z-[5000] p-5 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg hover:bg-white/90 transition-colors duration-300">
+								<Icon
+									icon={
+										muted ? "heroicons:speaker-x-mark-20-solid" : "wpf:speaker"
+									}
+									width="30"
+									height="30"
+									color="#fc045c"
+								/>
 							</button>
 
 							{visitorType !== "other" && <Menu />}

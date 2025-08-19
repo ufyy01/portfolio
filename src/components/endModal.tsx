@@ -66,7 +66,7 @@ const EndModal = () => {
 										className="w-12 h-12 mr-2"
 									/>
 									<p className="font-fraunces italic text-2xl text-white">
-										Jump To Skills Section
+										View My Skills
 									</p>
 								</Button>
 								<Button
@@ -84,7 +84,7 @@ const EndModal = () => {
 										className="w-12 h-12 mr-2"
 									/>
 									<p className="font-fraunces italic text-2xl text-white">
-										Jump To Projects Section
+										View My Projects
 									</p>
 								</Button>
 								<Button
@@ -102,7 +102,7 @@ const EndModal = () => {
 										className="w-12 h-12 mr-2"
 									/>
 									<p className="font-fraunces italic text-2xl text-white">
-										Jump To Contact Section
+										Contact Me
 									</p>
 								</Button>
 								<Button
@@ -120,7 +120,7 @@ const EndModal = () => {
 										className="w-12 h-12 mr-2"
 									/>
 									<p className="font-fraunces italic text-2xl text-white">
-										Jump To Resume Section
+										View My Resume
 									</p>
 								</Button>
 							</div>

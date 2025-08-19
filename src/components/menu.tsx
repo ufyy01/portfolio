@@ -33,7 +33,7 @@ const Menu = () => {
 	return (
 		<div className="z-[6000]">
 			<div
-				className="absolute top-24 right-4  p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
+				className="absolute top-26 right-4  p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg flex flex-col items-center hover:bg-white/90 transition-colors duration-300"
 				onClick={() => {
 					setIsOpen(!isOpen);
 					if (boardPosition === "default") {
@@ -41,9 +41,10 @@ const Menu = () => {
 					}
 				}}>
 				<Icon icon="ep:menu" width="26" height="26" color="#fc045c" />
+				<p className="font-fraunces text-lg text-[#fc045c]">Menu</p>
 			</div>
 			{isOpen && visitorType === "recruiter" && (
-				<div className="absolute top-40 right-4 flex flex-col gap-2">
+				<div className="absolute top-48 right-4 flex flex-col gap-2">
 					<Button
 						className="text-lg font-fraunces text-[#fc045c] italic p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
 						onClick={() => jumpToBoardPosition(11)}>
@@ -71,7 +72,7 @@ const Menu = () => {
 			)}
 
 			{isOpen && visitorType === "developer" && (
-				<div className="absolute top-40 right-4 flex flex-col gap-2">
+				<div className="absolute top-48 right-4 flex flex-col gap-2">
 					<Button
 						className="text-lg font-fraunces text-[#fc045c] italic p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
 						onClick={() => {
