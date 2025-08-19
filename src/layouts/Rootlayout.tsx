@@ -192,7 +192,7 @@ const RootLayout = () => {
 						style={
 							isLowEndAndroid
 								? { backgroundColor: getFallbackColor() }
-								: undefined
+								: { backgroundColor: skyColor }
 						}
 					/>
 					{!playing && (

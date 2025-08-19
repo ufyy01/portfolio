@@ -212,7 +212,9 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 			ref={rootRef}
 			className={`h-screen w-screen ${skyColor} relative overflow-hidden flex justify-center items-center`}
 			style={
-				isLowEndAndroid ? { backgroundColor: getFallbackColor() } : undefined
+				isLowEndAndroid
+					? { backgroundColor: getFallbackColor() }
+					: { backgroundColor: skyColor }
 			}>
 			{isNight && (
 				<div className="pointer-events-none absolute inset-0 z-[0] overflow-hidden">
