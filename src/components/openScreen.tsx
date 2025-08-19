@@ -14,6 +14,14 @@ import { Icon } from "@iconify/react";
 import { GameContext } from "@/context/gameContext";
 import { Button } from "./ui/button";
 
+function getFallbackColor() {
+	const hour = new Date().getHours();
+	if (hour >= 6 && hour < 9) return "#fed7aa"; // sunrise (orange-200)
+	if (hour >= 9 && hour < 17) return "#93c5fd"; // daytime (blue-300)
+	if (hour >= 17 && hour < 19) return "#93c5fd"; // sunset mid blend base
+	return "#1f2937"; // night (gray-800)
+}
+
 interface OpenScreenProps {
 	progress: number;
 	setPlaying: (playing: boolean) => void;
@@ -31,17 +39,35 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 
 	const rootRef = useRef<HTMLDivElement>(null);
 
-	const images = [
-		"/images/cloud1.png",
-		"/images/cloud2.png",
-		"/images/cloud3.png",
-		"/images/cloud4.png",
-		"/images/cloud5.png",
-		"/images/cloud6.png",
-		"/images/cloud7.png",
-		"/images/cloud4.png",
-		"/images/cloud1.png",
-	];
+	const images = useMemo(
+		() => [
+			"/images/cloud1.png",
+			"/images/cloud2.png",
+			"/images/cloud3.png",
+			"/images/cloud4.png",
+			"/images/cloud5.png",
+			"/images/cloud6.png",
+			"/images/cloud7.png",
+			"/images/cloud4.png",
+			"/images/cloud1.png",
+		],
+		[]
+	);
+
+	// Basic low-end Android detection to lighten the scene
+	const isLowEndAndroid = useMemo(() => {
+		if (typeof navigator === "undefined") return false;
+		const m = navigator.userAgent.match(/Android\s(\d+)/i);
+		if (!m) return false;
+		const major = parseInt(m[1], 10);
+		return Number.isFinite(major) && major <= 7; // treat Android 7 and below as low-end for safety
+	}, []);
+
+	const cloudImages = useMemo(
+		() => (isLowEndAndroid ? images.slice(0, 3) : images),
+		[isLowEndAndroid, images]
+	);
+
 	const containerRef = useRef(null);
 	// const introRef = useRef(null);
 	const continuousRef = useRef<HTMLDivElement>(null);
@@ -82,14 +108,14 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 
 	const stars = useMemo(
 		() =>
-			Array.from({ length: 120 }, () => ({
+			Array.from({ length: isLowEndAndroid ? 40 : 120 }, () => ({
 				top: Math.random() * 100,
 				left: Math.random() * 100,
 				size: Math.random() < 0.8 ? 2 : 3,
 				delay: Math.random() * 3,
 				opacity: 0.6 + Math.random() * 0.4,
 			})),
-		[]
+		[isLowEndAndroid]
 	);
 
 	const handleSpinKnow = () => {
@@ -127,6 +153,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 
 	useLayoutEffect(() => {
 		const elements = gsap.utils.toArray(".cloud-img");
+		if (isLowEndAndroid) return; // skip heavy animations on old devices
 
 		elements.forEach((el, index) => {
 			const fromX = index % 2 === 0 ? -200 : 200;
@@ -160,7 +187,7 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 				);
 			});
 		}
-	}, [images.length]);
+	}, [cloudImages.length, isLowEndAndroid]);
 
 	// Animate knowRef in only once on mount, set initial transform to prevent glitching
 	useEffect(() => {
@@ -183,7 +210,10 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 	return (
 		<div
 			ref={rootRef}
-			className={`h-screen w-screen ${skyColor} relative overflow-hidden flex justify-center items-center`}>
+			className={`h-screen w-screen ${skyColor} ${
+				isNight ? "bg-gray-900" : ""
+			} relative overflow-hidden flex justify-center items-center`}
+			style={{ backgroundColor: getFallbackColor() }}>
 			{isNight && (
 				<div className="pointer-events-none absolute inset-0 z-[0] overflow-hidden">
 					{stars.map((s, i) => (
@@ -206,12 +236,14 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 			<div
 				ref={containerRef}
 				className="w-full h-full absolute overflow-hidden">
-				{images.map((src, index) => {
+				{cloudImages.map((src, index) => {
 					return (
 						<img
 							key={index}
 							src={src}
 							alt={`Cloud ${index + 1}`}
+							loading="lazy"
+							decoding="async"
 							className={`absolute bg-blend-overlay w-[100%] xl:w-[50%] cloud-img ${cloudTint}`}
 							style={{
 								top:
@@ -330,12 +362,14 @@ const OpenScreen = ({ progress, setPlaying }: OpenScreenProps) => {
 			<div
 				ref={continuousRef}
 				className="w-screen h-fit absolute -top-10 left-0 z-[100]">
-				{images.slice(0, 1).map((src, index) => {
+				{cloudImages.slice(0, 1).map((src, index) => {
 					return (
 						<img
 							key={index}
 							src={src}
 							alt={`Cloud ${index + 1}`}
+							loading="lazy"
+							decoding="async"
 							className={`absolute w-[60%] md:w-[35%] 2xl:w-[25%] cloud-img continuous-cloud ${cloudTint}`}
 						/>
 					);
