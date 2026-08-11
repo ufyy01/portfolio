@@ -1,7 +1,9 @@
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import OpenScreen from "@/components/openScreen";
+import { useIsLowEndAndroid, useSkyTheme } from "@/lib/sky";
+import { POPUP_BOARDS } from "@/lib/popupMessages";
 import CloudPopup from "@/components/cloudPopup";
 import { useProgress } from "@react-three/drei";
 import { GameContext } from "@/context/gameContext";
@@ -13,11 +15,17 @@ import Projects from "@/pages/Projects";
 import Resume from "@/pages/Resume";
 import Skills from "@/pages/Skills";
 import type { ReactElement } from "react";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import HudButton from "@/components/hudButton";
+import { hudPanel } from "@/lib/hudStyles";
+import { cn } from "@/lib/utils";
 import DiceMore from "@/components/diceMore";
 import EndModal from "@/components/endModal";
 import Menu from "@/components/menu";
 import Seo from "@/components/Seo";
+import { useAmbientAudio } from "@/lib/useAmbientAudio";
+
+// Linear gain, roughly -18dB: loud enough to sit under the scene, never over it.
+const AMBIENT_VOLUME = 0.12;
 
 class ErrorBoundary extends React.Component<
 	{ children: React.ReactNode },
@@ -80,49 +88,25 @@ class ErrorBoundary extends React.Component<
 
 const RootLayout = () => {
 	const [muted, setMuted] = useState(false);
-	const audioRef = useRef<HTMLAudioElement | null>(null);
+	const audioRef = useAmbientAudio({ volume: AMBIENT_VOLUME, muted });
 	const gameContext = useContext(GameContext);
 	const showCloudPopup = gameContext?.showCloudPopup || false;
 	const setShowCloudPopup = gameContext?.setShowCloudPopup;
 	const boardName = gameContext?.boardName || "start";
+	const boardPosition = gameContext?.boardPosition;
 	const playing = gameContext?.playing || false;
 	const setPlaying = gameContext?.setPlaying || (() => {});
 	const isWalking = gameContext?.isWalking || false;
+
+	// Kept mounted through its own exit animation, so the scene can fade in behind it
+	const [showIntro, setShowIntro] = useState(!playing);
 
 	const visitorType = gameContext?.visitorType;
 
 	const { progress } = useProgress();
 
-	// Basic low-end Android detection to lighten the scene
-	const isLowEndAndroid = useMemo(() => {
-		if (typeof navigator === "undefined") return false;
-		const m = navigator.userAgent.match(/Android\s(\d+)/i);
-		if (!m) return false;
-		const major = parseInt(m[1], 10);
-		return Number.isFinite(major) && major <= 7; // treat Android 7 and below as low-end for safety
-	}, []);
-
-	const skyColor = useMemo(() => {
-		const hour = new Date().getHours();
-
-		if (hour >= 6 && hour < 9) {
-			return "bg-gradient-to-b from-orange-200 to-blue-300"; // sunrise
-		} else if (hour >= 9 && hour < 17) {
-			return "bg-blue-300"; // daytime
-		} else if (hour >= 17 && hour < 19) {
-			return "bg-gradient-to-b from-pink-300 to-blue-600"; // sunset
-		} else {
-			return "bg-gradient-to-b from-blue-400 to-gray-900"; // low saturation night
-		}
-	}, []);
-
-	function getFallbackColor() {
-		const hour = new Date().getHours();
-		if (hour >= 6 && hour < 9) return "#fed7aa"; // sunrise (orange-200)
-		if (hour >= 9 && hour < 17) return "#93c5fd"; // daytime (blue-300)
-		if (hour >= 17 && hour < 19) return "#93c5fd"; // sunset mid blend base
-		return "#1f2937"; // night (gray-800)
-	}
+	const isLowEndAndroid = useIsLowEndAndroid();
+	const sky = useSkyTheme();
 
 	const boardComponents: Record<string, ReactElement> = {
 		contact: <Contact />,
@@ -132,53 +116,14 @@ const RootLayout = () => {
 		skills: <Skills />,
 	};
 
-	const cloudTint = useMemo(() => {
-		const hour = new Date().getHours();
-
-		if (hour >= 6 && hour < 9) {
-			return "filter brightness-75 contrast-110"; // darker sunrise
-		} else if (hour >= 9 && hour < 17) {
-			return "filter brightness-90 contrast-105"; // less bright daytime
-		} else if (hour >= 17 && hour < 19) {
-			return "filter brightness-70 contrast-110 saturate-75"; // dusk
-		} else {
-			return "filter brightness-60 contrast-125 saturate-50";
-		}
-	}, []);
-
+	// Keyed on the tile landed on, not just its name: two different tiles can share a
+	// name (and you can land on the same one twice), and a name-only dependency
+	// silently skipped the popup in both cases.
 	useEffect(() => {
-		if (audioRef.current) {
-			audioRef.current.volume = 0.3;
-		}
-	}, [muted]);
-
-	useEffect(() => {
-		if (
-			[
-				"default",
-				"rollAgain",
-				"about",
-				"laptop",
-				"skills",
-				"projects",
-				"backToStart",
-				"headset",
-				"contact",
-				"controller",
-				"resume",
-			].includes(boardName)
-		) {
+		if (POPUP_BOARDS.includes(boardName)) {
 			setShowCloudPopup?.(true);
-
-			// if (boardName !== "default") {
-			// 	const timeout = setTimeout(() => {
-			// 		setShowCloudPopup?.(false);
-			// 	}, 10000);
-
-			// 	return () => clearTimeout(timeout);
-			// }
 		}
-	}, [boardName, setShowCloudPopup]);
+	}, [boardName, boardPosition, setShowCloudPopup]);
 
 	const location = useLocation();
 
@@ -188,44 +133,51 @@ const RootLayout = () => {
 			<ErrorBoundary key={location.key}>
 				<div className="w-screen h-screen overflow-hidden relative">
 					<div
-						className={`absolute inset-0 -z-10 ${skyColor}`}
+						className={`absolute inset-0 -z-10 ${sky.sky}`}
 						style={
-							isLowEndAndroid
-								? { backgroundColor: getFallbackColor() }
-								: { backgroundColor: skyColor }
+							isLowEndAndroid ? { backgroundColor: sky.fallback } : undefined
 						}
 					/>
-					{!playing && (
-						<OpenScreen progress={progress} setPlaying={setPlaying} />
+					{showIntro && (
+						<OpenScreen
+							progress={progress}
+							setPlaying={setPlaying}
+							onExited={() => setShowIntro(false)}
+						/>
 					)}
 					{playing && <Outlet />}
 					{playing && (
 						<>
-							<button
-								onClick={() => setMuted(!muted)}
-								className="absolute top-4 right-4 z-[5000] p-5 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg hover:bg-white/90 transition-colors duration-300">
-								<Icon
+							{/* One dock: the sound toggle and the menu trigger share a single
+							    surface, and the panel is what the menu list anchors to. */}
+							<div className={cn(hudPanel, "absolute top-4 right-4 z-[6000]")}>
+								<HudButton
 									icon={
-										muted ? "heroicons:speaker-x-mark-20-solid" : "wpf:speaker"
+										muted
+											? "heroicons:speaker-x-mark-20-solid"
+											: "heroicons:speaker-wave-20-solid"
 									}
-									width="30"
-									height="30"
-									color="#fc045c"
+									label={muted ? "Unmute music" : "Mute music"}
+									aria-pressed={muted}
+									onClick={() => setMuted(!muted)}
 								/>
-							</button>
-
-							{visitorType !== "other" && <Menu />}
-							<MultipleClouds cloudTint={cloudTint} />
-							{showCloudPopup && !isWalking && <CloudPopup />}
+								{visitorType !== "other" && <Menu />}
+							</div>
+							<MultipleClouds />
+							{/* Not while the intro is still exiting: the scene mounts behind
+							    it, so the popup would spend its whole slide-in hidden and be
+							    revealed already sitting there. */}
+							{showCloudPopup && !isWalking && !showIntro && <CloudPopup />}
 							{!isWalking && <DiceMore />}
 							<EndModal />
 							{boardComponents[boardName]}
+							{/* Level and muting both live in useAmbientAudio's gain node —
+							    an element-level `muted` here would cut instead of fade. */}
 							<audio
 								ref={audioRef}
-								src="/audio/kazez.mp3"
+								src="/audio/kazez-iwo-nikan.mp3"
 								autoPlay
 								loop
-								muted={muted}
 								className="opacity-0"
 							/>
 						</>

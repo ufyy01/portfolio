@@ -28,6 +28,94 @@
 	height: 100vh;
 }
 
+/*
+ * Mini-game stage (see components/gameShell.tsx). The board takes whatever the
+ * HUD leaves, so a game never scrolls. On a short viewport — a phone held
+ * sideways — stacking would squeeze the board to nothing, so the same pieces
+ * move beside it and the board gets the full height instead.
+ */
+.game-stage {
+	display: grid;
+	gap: 0.5rem;
+	grid-template-rows: auto auto minmax(0, 1fr) auto;
+	grid-template-areas: "head" "hint" "board" "foot";
+}
+
+@media (min-width: 768px) {
+	.game-stage {
+		gap: 0.75rem;
+	}
+}
+
+.game-stage-head {
+	grid-area: head;
+}
+.game-stage-hint {
+	grid-area: hint;
+}
+.game-stage-board {
+	grid-area: board;
+}
+.game-stage-foot {
+	grid-area: foot;
+}
+
+@media (max-height: 620px) and (min-width: 620px) {
+	.game-stage {
+		grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
+		grid-template-rows: auto auto minmax(0, 1fr);
+		grid-template-areas:
+			"board head"
+			"board hint"
+			"board foot";
+	}
+}
+
+/*
+ * Game picker (see pages/Controller.tsx). Compact rows are the default so all
+ * three games are reachable without scrolling on a handset; they only spread
+ * into cards when the screen has both the width and the height to hold them,
+ * and the blurb moves beside the list when the viewport is short and wide.
+ */
+.game-intro {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.game-picker {
+	display: grid;
+	gap: 0.75rem;
+}
+
+.game-picker > button {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	text-align: start;
+}
+
+@media (min-width: 768px) and (min-height: 620px) {
+	.game-picker {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 1rem;
+	}
+
+	.game-picker > button {
+		flex-direction: column;
+		text-align: center;
+	}
+}
+
+/* Scrollable areas that shouldn't show a scrollbar (intro card, popups) */
+.no-scrollbar {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
 body {
 	margin: 0;
 	padding: 0;

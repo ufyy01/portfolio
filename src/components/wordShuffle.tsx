@@ -1,8 +1,21 @@
 import { useState, useRef, useEffect, useContext } from "react";
-import { Button } from "./ui/button";
 import { GameContext } from "@/context/gameContext";
+import { drawerSheet } from "@/lib/drawerStyles";
+import GameShell, {
+	GameOverCard,
+	gameBoardSquare,
+	gameChip,
+} from "./gameShell";
 
 const GRID_SIZE = 10;
+/**
+ * A round hides a handful of words rather than the whole pool: the grid only has
+ * room for so many, and the counter used to count up to a total that could never
+ * be reached, so "found them all" never fired.
+ */
+const WORDS_PER_ROUND = 8;
+const ROUND_TIME = 90;
+
 const HIDDEN_WORDS = [
 	"node",
 	"next",
@@ -109,10 +122,25 @@ type Cell = {
 	found: boolean;
 };
 
+type Round = {
+	grid: Cell[][];
+	/** The words actually placed in this grid — the ones worth hunting for. */
+	words: string[];
+};
+
 const generateRandomLetter = () =>
 	String.fromCharCode(65 + Math.floor(Math.random() * 26));
 
-const createGrid = (WORDS: string[]): Cell[][] => {
+const shuffled = <T,>(items: T[]): T[] => {
+	const copy = [...items];
+	for (let i = copy.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[copy[i], copy[j]] = [copy[j], copy[i]];
+	}
+	return copy;
+};
+
+const createRound = (pool: string[]): Round => {
 	const emptyChar = "";
 	const grid: string[][] = Array(GRID_SIZE)
 		.fill(null)
@@ -163,7 +191,11 @@ const createGrid = (WORDS: string[]): Cell[][] => {
 		return false;
 	};
 
-	WORDS.forEach((word) => placeWord(word));
+	const words: string[] = [];
+	for (const word of shuffled(pool)) {
+		if (words.length >= WORDS_PER_ROUND) break;
+		if (word.length <= GRID_SIZE && placeWord(word)) words.push(word);
+	}
 
 	// Fill remaining cells
 	const finalGrid: Cell[][] = grid.map((row, rIdx) =>
@@ -172,10 +204,10 @@ const createGrid = (WORDS: string[]): Cell[][] => {
 			row: rIdx,
 			col: cIdx,
 			found: false,
-		}))
+		})),
 	);
 
-	return finalGrid;
+	return { grid: finalGrid, words };
 };
 
 // Fills in any skipped cells between the last selected cell and the current hover/touch cell
@@ -183,7 +215,7 @@ const createGrid = (WORDS: string[]): Cell[][] => {
 function extendPathStraight(
 	prev: [number, number][],
 	targetRow: number,
-	targetCol: number
+	targetCol: number,
 ) {
 	if (prev.length === 0) return prev;
 	const [lr, lc] = prev[prev.length - 1];
@@ -219,27 +251,29 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 	const gameContext = useContext(GameContext);
 	const visitorType = gameContext?.visitorType;
 
-	const ACTIVE_WORDS =
+	const pool =
 		visitorType === "recruiter"
 			? HIDDEN_WORDS_RECRUITER
 			: visitorType === "developer"
-			? HIDDEN_WORDS
-			: HIDDEN_WORDS_OTHER;
+				? HIDDEN_WORDS
+				: HIDDEN_WORDS_OTHER;
 
-	const [grid, setGrid] = useState<Cell[][]>(() => createGrid(ACTIVE_WORDS));
+	const [round, setRound] = useState<Round>(() => createRound(pool));
 	const [selectedPath, setSelectedPath] = useState<[number, number][]>([]);
 	const [foundWords, setFoundWords] = useState<string[]>([]);
 	const [isMouseDown, setIsMouseDown] = useState(false);
 
-	const [timeLeft, setTimeLeft] = useState(80);
+	const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
 	const [gameOver, setGameOver] = useState(false);
 	const gridRef = useRef<HTMLDivElement | null>(null);
 
+	const { grid, words } = round;
+
 	const resetGame = () => {
-		setGrid(createGrid(ACTIVE_WORDS));
+		setRound(createRound(pool));
 		setSelectedPath([]);
 		setFoundWords([]);
-		setTimeLeft(80);
+		setTimeLeft(ROUND_TIME);
 		setGameOver(false);
 	};
 
@@ -275,23 +309,30 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 		if (gameOver) return;
 		setIsMouseDown(false);
 
-		const word = selectedPath
-			.map(([r, c]) => grid[r][c].letter)
-			.join("")
-			.toLowerCase();
+		const letters = selectedPath.map(([r, c]) => grid[r][c].letter).join("");
+		// Dragging right-to-left or bottom-to-top spells the word backwards; that's
+		// still the word, so both readings count.
+		const candidates = [
+			letters.toLowerCase(),
+			[...letters].reverse().join("").toLowerCase(),
+		];
+		const match = candidates.find(
+			(word) => words.includes(word) && !foundWords.includes(word),
+		);
 
-		if (ACTIVE_WORDS.includes(word) && !foundWords.includes(word)) {
-			setFoundWords([...foundWords, word]);
+		if (match) {
+			setFoundWords([...foundWords, match]);
 			// Mark each selected cell as found
-			setGrid((prevGrid) =>
-				prevGrid.map((row) =>
+			setRound((prev) => ({
+				...prev,
+				grid: prev.grid.map((row) =>
 					row.map((cell) =>
 						selectedPath.some(([r, c]) => r === cell.row && c === cell.col)
 							? { ...cell, found: true }
-							: cell
-					)
-				)
-			);
+							: cell,
+					),
+				),
+			}));
 		}
 
 		setSelectedPath([]);
@@ -313,53 +354,76 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 	}, [isMouseDown]);
 
 	useEffect(() => {
-		if (foundWords.length === ACTIVE_WORDS.length) {
+		if (words.length > 0 && foundWords.length === words.length) {
 			setGameOver(true);
 		}
-	}, [foundWords, ACTIVE_WORDS.length]);
+	}, [foundWords, words]);
 
-	const allFound = foundWords.length === ACTIVE_WORDS.length;
+	const allFound = words.length > 0 && foundWords.length === words.length;
 
 	return (
-		<div className="fixed inset-0 z-[2000] bg-black/20 backdrop-blur-sm flex items-center justify-center p-4">
-			<div className="z-[2500]">
-				<div className="w-full max-w-3xl flex items-center justify-between px-4 my-3 flex-wrap">
-					<h2 className="text-2xl lg:text-3xl font-fraunces italic my-4 text-orange-400">
-						Word Shuffle
-					</h2>
-					<div className="flex items-center gap-3">
-						<span
-							className={`px-3 py-1 rounded-md text-white ${
-								timeLeft <= 15
-									? "bg-red-500"
-									: timeLeft <= 60
-									? "bg-yellow-500"
-									: "bg-emerald-600"
-							}`}>
-							⏱ {timeLeft}
-						</span>
-						<span className="px-3 py-1 rounded-md bg-slate-800 text-white">
-							Found: {foundWords.length}/{ACTIVE_WORDS.length}
-						</span>
-						<span className="px-3 py-1 rounded-md bg-slate-700 text-white">
-							Left: {ACTIVE_WORDS.length - foundWords.length}
-						</span>
-						<button
-							onClick={resetGame}
-							className="px-3 py-1 rounded-md bg-[#fc045c] text-white hover:bg-slate-700 transition">
-							Restart
-						</button>
-					</div>
-				</div>
-				<div>
-					<p className="text-base text-white mb-2">
-						Click and hold, then drag across adjacent letters
-						(up/down/left/right). Release to submit the word.
-					</p>
-
+		// Its own panel rather than the drawer's: the grid needs raw pointer events,
+		// and vaul reads those as a drag on the sheet.
+		<div className="fixed inset-0 z-[2000] flex items-center justify-center bg-slate-900/50 p-3 backdrop-blur-sm">
+			<div
+				className={`${drawerSheet} flex h-full max-h-[92svh] w-full max-w-3xl flex-col p-4`}>
+				<GameShell
+					title="Word Shuffle"
+					hint="Hold and drag across letters, then release."
+					onRestart={resetGame}
+					onBack={() => setGame(null)}
+					status={
+						<>
+							<span
+								className={`${gameChip} ${
+									timeLeft <= 15
+										? "bg-red-500"
+										: timeLeft <= 45
+											? "bg-yellow-500"
+											: "bg-emerald-600"
+								}`}>
+								⏱ {timeLeft}s
+							</span>
+							<span className={`${gameChip} bg-slate-700`}>
+								Found: {foundWords.length}/{words.length}
+							</span>
+						</>
+					}
+					footer={
+						<div className="flex flex-wrap items-center justify-center gap-1.5">
+							{words.map((word) => {
+								const found = foundWords.includes(word);
+								return (
+									<span
+										key={word}
+										className={`rounded-full border px-3 py-1 text-sm font-semibold uppercase tracking-wide transition ${
+											found
+												? "border-emerald-600/30 bg-emerald-100 text-emerald-700 line-through"
+												: "border-[#fc045c]/20 bg-white text-slate-700"
+										}`}>
+										{word}
+									</span>
+								);
+							})}
+						</div>
+					}
+					overlay={
+						gameOver ? (
+							<GameOverCard
+								won={allFound}
+								message={
+									allFound
+										? `Amazing work — all ${words.length} words with ${timeLeft}s to spare!`
+										: `You found ${foundWords.length} of ${words.length}. Try again and beat the clock.`
+								}
+								onRestart={resetGame}
+								onBack={() => setGame(null)}
+							/>
+						) : null
+					}>
 					<div
 						ref={gridRef}
-						className="relative z-50 grid gap-2 bg-white p-4 rounded shadow-md touch-none overscroll-contain select-none aspect-square w-full max-w-[min(90vmin,700px)]"
+						className={`${gameBoardSquare} grid touch-none select-none gap-[1%] overscroll-contain rounded-lg bg-white p-[1%] shadow-md`}
 						style={{
 							gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0,1fr))`,
 							gridTemplateRows: `repeat(${GRID_SIZE}, minmax(0,1fr))`,
@@ -419,21 +483,18 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 						{grid.map((row) =>
 							row.map((cell) => {
 								const isSelected = selectedPath.some(
-									([r, c]) => r === cell.row && c === cell.col
+									([r, c]) => r === cell.row && c === cell.col,
 								);
-								const isFound = cell.found;
 								return (
 									<div
 										key={`${cell.row}-${cell.col}`}
-										className={`w-full aspect-square flex items-center justify-center text-xl font-bold rounded cursor-pointer select-none border 
-        ${
-					isFound
-						? "bg-green-300 text-white"
-						: isSelected
-						? "bg-blue-200"
-						: "bg-white"
-				} 
-        ${!isFound ? "hover:bg-blue-50" : ""}`}
+										className={`flex cursor-pointer select-none items-center justify-center rounded border font-bold leading-none text-[clamp(0.65rem,5cqmin,1.5rem)] ${
+											cell.found
+												? "border-emerald-600/30 bg-emerald-300 text-white"
+												: isSelected
+													? "border-blue-300 bg-blue-200"
+													: "border-slate-200 bg-white hover:bg-blue-50"
+										}`}
 										onMouseDown={(e) => {
 											e.preventDefault();
 											e.stopPropagation();
@@ -444,39 +505,11 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 										{cell.letter}
 									</div>
 								);
-							})
+							}),
 						)}
 					</div>
-				</div>
+				</GameShell>
 			</div>
-
-			{gameOver && (
-				<div className="fixed inset-0 z-[3000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-					<div className="bg-white rounded-xl p-6 w-full max-w-md text-center shadow-xl">
-						<div className="text-5xl mb-2">{allFound ? "🎉" : "⏰"}</div>
-						<h3 className="text-2xl font-semibold mb-2 font-fraunces italic text-orange-400">
-							{allFound ? "You solved it!" : "Time's up!"}
-						</h3>
-						<p className="text-slate-600 mb-6">
-							{allFound
-								? `Amazing work — You found all the words!`
-								: "Try again and beat the clock."}
-						</p>
-						<Button
-							size="lg"
-							onClick={resetGame}
-							className="px-4 py-2 rounded-md bg-[#fc045c] font-fraunces italic text-lg text-white hover:bg-slate-700 transition">
-							Play Again
-						</Button>
-						<Button
-							size="lg"
-							onClick={() => setGame(null)}
-							className="px-4 py-2 rounded-md bg-orange-400 font-fraunces italic text-lg text-white hover:bg-slate-700 transition ms-2">
-							Back to Games
-						</Button>
-					</div>
-				</div>
-			)}
 		</div>
 	);
 };

@@ -1,5 +1,16 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "./ui/button";
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
+import { Delete } from "lucide-react";
+import GameShell, {
+	GameOverCard,
+	gameBoardSquare,
+	gameChip,
+} from "./gameShell";
 
 // Alphabet Sudoku uses A–I instead of 1–9
 const LETTERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I"] as const;
@@ -40,32 +51,40 @@ const MASK: boolean[][] = [
 
 const START_TIME = 300; // seconds (5 minutes)
 
+type Position = { r: number; c: number };
+
 function buildInitialGrid(): Grid {
 	return SOLUTION.map((row, r) =>
 		row.map((letter, c) => ({
 			value: MASK[r][c] ? letter : "",
 			fixed: MASK[r][c],
-		}))
+		})),
 	);
-}
-
-function isLetter(value: string): boolean {
-	return LETTERS.includes(value as (typeof LETTERS)[number]);
 }
 
 function deepCloneGrid(g: Grid): Grid {
 	return g.map((row) => row.map((cell) => ({ ...cell })));
 }
 
-type FlipCardProps = {
+/** First editable cell at or after (r, c), scanning left-to-right, top-to-bottom. */
+function firstOpenCell(grid: Grid): Position | null {
+	for (let r = 0; r < 9; r++) {
+		for (let c = 0; c < 9; c++) if (!grid[r][c].fixed) return { r, c };
+	}
+	return null;
+}
+
+type SudokuProps = {
 	setGame: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
-const Sudoku: React.FC<FlipCardProps> = ({ setGame }) => {
+const Sudoku: React.FC<SudokuProps> = ({ setGame }) => {
 	const [grid, setGrid] = useState<Grid>(() => buildInitialGrid());
+	const [selected, setSelected] = useState<Position | null>(() =>
+		firstOpenCell(buildInitialGrid()),
+	);
 	const [timeLeft, setTimeLeft] = useState<number>(START_TIME);
 	const [started, setStarted] = useState<boolean>(false);
-	const [paused, setPaused] = useState<boolean>(false);
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	const solved = useMemo(() => {
@@ -81,7 +100,7 @@ const Sudoku: React.FC<FlipCardProps> = ({ setGame }) => {
 
 	// Start & tick timer
 	useEffect(() => {
-		if (!started || paused) return;
+		if (!started) return;
 		if (timerRef.current) return;
 		timerRef.current = setInterval(() => {
 			setTimeLeft((t) => (t > 0 ? t - 1 : 0));
@@ -92,7 +111,7 @@ const Sudoku: React.FC<FlipCardProps> = ({ setGame }) => {
 				timerRef.current = null;
 			}
 		};
-	}, [started, paused]);
+	}, [started]);
 
 	// Stop timer when game over
 	useEffect(() => {
@@ -103,36 +122,90 @@ const Sudoku: React.FC<FlipCardProps> = ({ setGame }) => {
 	}, [gameOver]);
 
 	function resetGame() {
-		setGrid(buildInitialGrid());
+		const fresh = buildInitialGrid();
+		setGrid(fresh);
+		setSelected(firstOpenCell(fresh));
 		setTimeLeft(START_TIME);
 		setStarted(false);
-		setPaused(false);
 		if (timerRef.current) {
 			clearInterval(timerRef.current);
 			timerRef.current = null;
 		}
 	}
 
-	function handleChange(r: number, c: number, raw: string) {
-		if (gameOver) return;
-		if (grid[r][c].fixed) return;
-		const v = raw.toUpperCase().trim();
-		const val = v.slice(0, 1); // single char only
+	/**
+	 * Letters land through the pad or a hardware keyboard — never through a text
+	 * input. On a phone, focusing 81 inputs meant the on-screen keyboard covering
+	 * the half of the board you were trying to fill.
+	 */
+	const writeLetter = useCallback(
+		(letter: string) => {
+			if (gameOver || !selected) return;
+			const { r, c } = selected;
+			if (grid[r][c].fixed) return;
 
-		const next = deepCloneGrid(grid);
-		if (isLetter(val)) {
-			next[r][c].value = val;
-		} else if (val === "") {
-			next[r][c].value = "";
-		} else {
-			// ignore invalid entries
-			return;
-		}
-		if (!started) setStarted(true);
-		setGrid(next);
-	}
+			const next = deepCloneGrid(grid);
+			next[r][c].value = letter;
+			setGrid(next);
+			if (letter && !started) setStarted(true);
+		},
+		[gameOver, selected, grid, started],
+	);
 
-	// Optional: highlight conflicts (row/col/box)
+	/** Arrow keys skip the pre-filled cells, since those can never be typed into. */
+	const moveSelection = useCallback(
+		(dr: number, dc: number) => {
+			setSelected((prev) => {
+				if (!prev) return prev;
+				let { r, c } = prev;
+				for (let step = 0; step < 9; step++) {
+					r = (r + dr + 9) % 9;
+					c = (c + dc + 9) % 9;
+					if (!grid[r][c].fixed) return { r, c };
+				}
+				return prev;
+			});
+		},
+		[grid],
+	);
+
+	/**
+	 * Listening on the window rather than the board: the letter pad steals focus
+	 * every time it's tapped, so a handler bound to the grid would go quiet the
+	 * moment someone mixed the pad with the keyboard.
+	 */
+	useEffect(() => {
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.metaKey || event.ctrlKey || event.altKey) return;
+			const key = event.key;
+
+			if (/^[a-iA-I]$/.test(key)) {
+				event.preventDefault();
+				writeLetter(key.toUpperCase());
+				return;
+			}
+			if (key === "Backspace" || key === "Delete") {
+				event.preventDefault();
+				writeLetter("");
+				return;
+			}
+			const moves: Record<string, [number, number]> = {
+				ArrowUp: [-1, 0],
+				ArrowDown: [1, 0],
+				ArrowLeft: [0, -1],
+				ArrowRight: [0, 1],
+			};
+			if (moves[key]) {
+				event.preventDefault();
+				moveSelection(...moves[key]);
+			}
+		};
+
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [writeLetter, moveSelection]);
+
+	// Highlight conflicts (row/col/box)
 	function hasConflict(r: number, c: number, val: string): boolean {
 		if (!val) return false;
 		// row
@@ -160,95 +233,110 @@ const Sudoku: React.FC<FlipCardProps> = ({ setGame }) => {
 		return `${m}:${s}`;
 	}
 
+	const padDisabled = gameOver || !selected;
+
 	return (
-		<div className="w-full flex flex-col items-center gap-6 py-6">
-			{/* HUD */}
-			<div className="w-full max-w-3xl flex items-center justify-between px-4 gap-4">
-				<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400 text-nowrap">
-					Alphabet Sudoku
-				</h2>
-				<div className="flex items-center gap-3 flex-wrap">
-					<span
-						className={`px-3 py-1 rounded-md text-white ${
-							timeLeft <= 15
-								? "bg-red-500"
-								: timeLeft <= 60
+		<GameShell
+			title="Alphabet Sudoku"
+			hint="Tap a square, then pick a letter."
+			onRestart={resetGame}
+			onBack={() => setGame(null)}
+			status={
+				<span
+					className={`${gameChip} ${
+						timeLeft <= 15
+							? "bg-red-500"
+							: timeLeft <= 60
 								? "bg-yellow-500"
 								: "bg-emerald-600"
-						}`}>
-						⏱ {formatTime(timeLeft)}
-					</span>
-
+					}`}>
+					⏱ {formatTime(timeLeft)}
+				</span>
+			}
+			footer={
+				<div className="mx-auto grid w-fit grid-cols-5 gap-1.5 md:grid-cols-10">
+					{LETTERS.map((letter) => (
+						<button
+							key={letter}
+							type="button"
+							disabled={padDisabled}
+							onClick={() => writeLetter(letter)}
+							className="h-10 w-10 rounded-lg border border-[#fc045c]/20 bg-white text-lg font-semibold text-slate-800 shadow-sm transition hover:bg-[#fc045c] hover:text-white active:scale-95 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-slate-800">
+							{letter}
+						</button>
+					))}
 					<button
-						onClick={resetGame}
-						className="px-3 py-1 rounded-md bg-[#fc045c] text-white hover:bg-slate-700 transition">
-						Restart
+						type="button"
+						disabled={padDisabled}
+						onClick={() => writeLetter("")}
+						aria-label="Clear square"
+						title="Clear square"
+						className="grid h-10 w-10 place-items-center rounded-lg border border-orange-700/20 bg-white text-orange-700 shadow-sm transition hover:bg-orange-50 active:scale-95 disabled:opacity-40">
+						<Delete size={20} />
 					</button>
 				</div>
-			</div>
-
-			{/* Board */}
-			<div className="grid grid-cols-9 grid-rows-9 select-none">
-				{grid.map((row, r) => (
-					<React.Fragment key={r}>
-						{row.map((cell, c) => {
-							const thickRight = (c + 1) % 3 === 0 && c !== 8;
-							const thickBottom = (r + 1) % 3 === 0 && r !== 8;
-							const conflict = hasConflict(r, c, cell.value);
-							return (
-								<div
-									key={`${r}-${c}`}
-									className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center border border-slate-300 ${
-										thickRight ? "border-r-2 border-r-slate-700" : ""
-									} ${thickBottom ? "border-b-2 border-b-slate-700" : ""} ${
-										cell.fixed ? "bg-slate-100" : "bg-white"
-									}`}>
-									<input
-										inputMode="text"
-										maxLength={1}
-										value={cell.value}
-										disabled={cell.fixed || paused || gameOver}
-										onChange={(e) => handleChange(r, c, e.target.value)}
-										className={`w-full h-full text-center uppercase font-semibold outline-none caret-transparent bg-transparent ${
-											conflict ? "text-red-600" : "text-slate-900"
-										}`}
-									/>
-								</div>
-							);
-						})}
-					</React.Fragment>
-				))}
-			</div>
-
-			{/* Game Over Overlay */}
-			{gameOver && (
-				<div className="fixed inset-0 z-[2000] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-					<div className="bg-white rounded-xl p-6 w-full max-w-md text-center shadow-xl">
-						<div className="text-5xl mb-2">{solved ? "🎉" : "⏰"}</div>
-						<h3 className="text-2xl font-semibold mb-2 font-fraunces italic text-orange-400">
-							{solved ? "You solved it!" : "Time's up!"}
-						</h3>
-						<p className="text-slate-600 mb-6">
-							{solved
+			}
+			overlay={
+				gameOver ? (
+					<GameOverCard
+						won={solved}
+						message={
+							solved
 								? `Amazing work — finished with ${formatTime(timeLeft)} left.`
-								: "Try again and beat the clock."}
-						</p>
-						<Button
-							size="lg"
-							onClick={resetGame}
-							className="px-4 py-2 rounded-md bg-[#fc045c] font-fraunces italic text-lg text-white hover:bg-slate-700 transition">
-							Play Again
-						</Button>
-						<Button
-							size="lg"
-							onClick={() => setGame(null)}
-							className="px-4 py-2 rounded-md bg-orange-400 font-fraunces italic text-lg text-white hover:bg-slate-700 transition ms-2">
-							Back to Games
-						</Button>
-					</div>
-				</div>
-			)}
-		</div>
+								: "Try again and beat the clock."
+						}
+						onRestart={resetGame}
+						onBack={() => setGame(null)}
+					/>
+				) : null
+			}>
+			<div
+				className={`${gameBoardSquare} grid grid-cols-9 grid-rows-9 select-none overflow-hidden rounded-lg border-2 border-slate-700 bg-white shadow-md`}>
+				{grid.map((row, r) =>
+					row.map((cell, c) => {
+						const thickRight = (c + 1) % 3 === 0 && c !== 8;
+						const thickBottom = (r + 1) % 3 === 0 && r !== 8;
+						const conflict = hasConflict(r, c, cell.value);
+						const isSelected = selected?.r === r && selected?.c === c;
+						// Everything sharing a line with the selected square, so the
+						// letter you're about to place has visible context.
+						const inScope =
+							!!selected &&
+							(selected.r === r ||
+								selected.c === c ||
+								(Math.floor(selected.r / 3) === Math.floor(r / 3) &&
+									Math.floor(selected.c / 3) === Math.floor(c / 3)));
+
+						return (
+							<button
+								key={`${r}-${c}`}
+								type="button"
+								disabled={cell.fixed || gameOver}
+								onClick={() => setSelected({ r, c })}
+								className={`flex items-center justify-center border border-slate-300 font-semibold leading-none text-[clamp(0.7rem,6cqmin,1.75rem)] ${
+									thickRight ? "border-r-2 border-r-slate-700" : ""
+								} ${thickBottom ? "border-b-2 border-b-slate-700" : ""} ${
+									isSelected
+										? "bg-[#fc045c]/15 ring-2 ring-inset ring-[#fc045c]"
+										: inScope
+											? "bg-[#fc045c]/5"
+											: cell.fixed
+												? "bg-slate-100"
+												: "bg-white"
+								} ${
+									conflict
+										? "text-red-600"
+										: cell.fixed
+											? "text-slate-500"
+											: "text-slate-900"
+								} disabled:cursor-default`}>
+								{cell.value}
+							</button>
+						);
+					}),
+				)}
+			</div>
+		</GameShell>
 	);
 };
 

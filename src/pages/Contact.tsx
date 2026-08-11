@@ -11,6 +11,13 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+	drawerBody,
+	drawerCard,
+	drawerCloseButton,
+	drawerHeading,
+	drawerPanel,
+} from "@/lib/drawerStyles";
 
 import { Icon } from "@iconify/react/dist/iconify.js";
 
@@ -27,76 +34,66 @@ const Contact = () => {
 	return (
 		<Drawer open={showMore} onOpenChange={setShowMore}>
 			<DrawerContent
-				className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12 pb-5 max-h-[85svh] h-[85svh] md:h-auto overflow-y-auto overscroll-contain touch-pan-y after:hidden"
+				className={`${drawerPanel} h-[85svh] max-h-[85svh] md:h-auto`}
 				style={{ WebkitOverflowScrolling: "touch" }}>
 				<div
-					className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y pr-2"
+					className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pr-2"
 					style={{ WebkitOverflowScrolling: "touch" }}>
-					<DrawerHeader>
-						<DrawerTitle className=""></DrawerTitle>
-						<DrawerDescription className="w-11/12 flex flex-col md:flex-row mx-auto gap-5 text-white text-start">
-							<div className="lg:w-1/2  ">
-								<div className="text-lg">
-									<p className="text-start font-fraunces italic text-orange-400 mt-10 text-3xl md:text-5xl">
-										Let's talk
-									</p>
-									<p className="text-start my-5">
-										Let's talk about that project you're working on! <br /> or
-										just say hi!
-									</p>
-								</div>
-								<div>
-									<div className="flex items-center gap-2">
-										<Icon
-											icon="line-md:phone-filled"
-											width="24"
-											height="24"
-											color="#fc045c"
-										/>
-										<p>
-											<a
-												href="tel:+2348064592287"
-												className="text-white cursor-pointer">
-												+234 806 459 2287
-											</a>
-										</p>
-									</div>
-									<div className="flex items-center gap-2 mt-2">
-										<Icon
-											icon="line-md:email-alt-filled"
-											width="24"
-											height="24"
-											color="#fc045c"
-										/>
-										<p>
-											<a
-												href="mailto:amazingufy@gmail.com"
-												className="text-white cursor-pointer">
-												amazingufy@gmail.com
-											</a>
-										</p>
-									</div>
-								</div>
-							</div>
-							<div className="lg:w-1/2 mt-5">
-								<img
-									src="/images/ufuoma_contact_qr.png"
-									alt="Contact QR Code"
-									className="w-full h-auto"
-								/>
-								<Button
-									size="lg"
-									className="bg-[#fc045c] text-white text-lg mt-3 hover:bg-[#fc045c]/80 w-full">
-									Scan me! 👆🏾
-								</Button>
-							</div>
+					<DrawerHeader className="w-11/12 mx-auto">
+						<DrawerTitle
+							className={`${drawerHeading} mt-6 text-start text-3xl md:text-5xl`}>
+							Let's talk
+						</DrawerTitle>
+						<DrawerDescription
+							className={`${drawerBody} mt-3 text-start text-lg`}>
+							Let's talk about that project you're working on — or just say hi!
 						</DrawerDescription>
 					</DrawerHeader>
+
+					<div className="w-11/12 mx-auto flex flex-col gap-5 pb-6 md:flex-row">
+						<div className={`${drawerCard} flex flex-col gap-4 p-5 lg:w-1/2`}>
+							<a
+								href="tel:+2348064592287"
+								className="flex items-center gap-3 text-lg text-slate-800 transition-colors hover:text-[#fc045c]">
+								<Icon
+									icon="line-md:phone-filled"
+									width="24"
+									height="24"
+									color="#fc045c"
+								/>
+								+234 806 459 2287
+							</a>
+							<a
+								href="mailto:amazingufy@gmail.com"
+								className="flex items-center gap-3 text-lg text-slate-800 transition-colors hover:text-[#fc045c]">
+								<Icon
+									icon="line-md:email-alt-filled"
+									width="24"
+									height="24"
+									color="#fc045c"
+								/>
+								amazingufy@gmail.com
+							</a>
+						</div>
+
+						<div className={`${drawerCard} p-5 lg:w-1/2`}>
+							<img
+								src="/images/ufuoma_contact_qr.png"
+								alt="QR code linking to Ufuoma's contact details"
+								className="h-auto w-full"
+							/>
+							<Button
+								size="lg"
+								className="mt-3 w-full bg-[#fc045c] text-lg text-white hover:bg-[#d0034c]">
+								Scan me! 👆🏾
+							</Button>
+						</div>
+					</div>
 				</div>
 
 				<DrawerFooter>
-					<DrawerClose>
-						<Button size="lg" className="bg-white text-orange-400 ">
+					<DrawerClose asChild>
+						<Button size="lg" className={drawerCloseButton}>
 							Back to board
 						</Button>
 					</DrawerClose>

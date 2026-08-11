@@ -1,9 +1,19 @@
 import { GameContext } from "@/context/gameContext";
 import { Button } from "./ui/button";
-import { useContext, useLayoutEffect, useRef, useState } from "react";
+import {
+	useCallback,
+	useContext,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import gsap from "gsap";
 import { Icon } from "@iconify/react/dist/iconify.js";
-import { useIsMobile } from "@/lib/useMoble";
+import { useIsMobile, usePrefersReducedMotion } from "@/lib/useMoble";
+import { getPopupMessage, type PopupAction } from "@/lib/popupMessages";
+import { useOverflowHint } from "@/lib/useOverflowHint";
 
 interface DeviceMotionEventWithPermission extends DeviceMotionEvent {
 	requestPermission?: () => Promise<"granted" | "denied">;
@@ -13,57 +23,173 @@ interface DeviceOrientationEventWithPermission extends DeviceOrientationEvent {
 	requestPermission?: () => Promise<"granted" | "denied">;
 }
 
+const PANEL_ART = "/images/cloudPop.png";
+
+// Remembered across popups so only the very first one waits on the image
+let panelArtReady = false;
+
+const ACTION_ICONS: Record<PopupAction["kind"], string> = {
+	ready: "streamline-pixel:entertainment-events-hobbies-board-game-dice",
+	open: "ep:info-filled",
+	dismiss: "mdi:check",
+};
+
 const CloudPopup = () => {
 	const isMobile = useIsMobile();
+	const reducedMotion = usePrefersReducedMotion();
 
 	const gameContext = useContext(GameContext);
 
 	const visitorType = gameContext?.visitorType;
+	const boardName = gameContext?.boardName || "default";
+	const grantedMotionPermission = gameContext?.grantedMotionPermission ?? false;
+	const setGrantedMotionPermission = gameContext?.setGrantedMotionPermission;
+	const setShowCloudPopup = gameContext?.setShowCloudPopup;
+	const setShowMore = gameContext?.setShowMore;
 
 	const popupRef = useRef<HTMLDivElement>(null);
+	const dismissingRef = useRef(false);
 
-	const [bgLoaded, setBgLoaded] = useState(false);
+	const [artReady, setArtReady] = useState(panelArtReady);
+
+	// Drawn once per appearance, so a random line can't change while it's being read
+	const [seed] = useState(() => Math.random());
+
+	const message = useMemo(
+		() =>
+			getPopupMessage({
+				boardName,
+				visitorType,
+				isMobile,
+				motionGranted: grantedMotionPermission,
+				seed,
+			}),
+		[boardName, visitorType, isMobile, grantedMotionPermission, seed]
+	);
+
+	const titleId = `cloud-popup-${boardName}`;
+
+	const { ref: bodyRef, hasMore } = useOverflowHint<HTMLDivElement>(
+		message?.html
+	);
 
 	useLayoutEffect(() => {
+		const panel = popupRef.current;
 		const ctx = gsap.context(() => {
 			const animateIn = () => {
 				if (!popupRef.current) return;
-				gsap.set(popupRef.current, {
-					xPercent: 100,
-					autoAlpha: 0,
-					force3D: true,
-				});
-				gsap.to(popupRef.current, {
-					xPercent: 0,
-					autoAlpha: 1,
-					duration: 0.6,
-					ease: "power3.out",
-				});
+				if (reducedMotion) {
+					gsap.set(popupRef.current, { xPercent: 0, autoAlpha: 1 });
+					return;
+				}
+				gsap.fromTo(
+					popupRef.current,
+					{ xPercent: 100, autoAlpha: 0, force3D: true },
+					{
+						xPercent: 0,
+						autoAlpha: 1,
+						duration: 0.7,
+						ease: "back.out(1.1)",
+						force3D: true,
+					}
+				);
 			};
 
-			// Preload the background image before showing/animating the popup
-			const img = new Image();
-			img.src = "/images/cloudPop.png";
-			if (img.complete) {
-				setBgLoaded(true);
+			if (panelArtReady) {
 				animateIn();
+				return;
+			}
+
+			// Wait for the cloud art the first time, so it can't pop in mid-slide
+			const img = new Image();
+			img.src = PANEL_ART;
+			const ready = () => {
+				panelArtReady = true;
+				setArtReady(true);
+				animateIn();
+			};
+			if (img.complete) {
+				ready();
 			} else {
-				img.onload = () => {
-					setBgLoaded(true);
-					animateIn();
-				};
-				img.onerror = () => {
-					// Even if it fails, proceed so the UI isn't blocked
-					setBgLoaded(true);
-					animateIn();
-				};
+				img.onload = ready;
+				// Even if it fails, proceed so the UI isn't blocked
+				img.onerror = ready;
 			}
 		}, popupRef);
-		return () => ctx.revert();
-	}, []);
 
-	const grantedMotionPermission = gameContext?.grantedMotionPermission;
-	const setGrantedMotionPermission = gameContext?.setGrantedMotionPermission;
+		return () => {
+			// Kill the dismiss tween too — it outlives the context that owns the entrance
+			if (panel) gsap.killTweensOf(panel);
+			ctx.revert();
+		};
+	}, [reducedMotion]);
+
+	/** The only way this popup closes — animation, state and re-entrancy in one place. */
+	const dismiss = useCallback(
+		(then?: () => void) => {
+			if (dismissingRef.current) return;
+			dismissingRef.current = true;
+
+			const done = () => {
+				setShowCloudPopup?.(false);
+				then?.();
+			};
+
+			if (!popupRef.current || reducedMotion) {
+				done();
+				return;
+			}
+
+			gsap.to(popupRef.current, {
+				xPercent: 100,
+				autoAlpha: 0,
+				duration: 0.45,
+				ease: "power2.in",
+				onComplete: done,
+			});
+		},
+		[reducedMotion, setShowCloudPopup]
+	);
+
+	useEffect(() => {
+		const onKeyDown = (e: KeyboardEvent) => {
+			if (e.key === "Escape") dismiss();
+		};
+		window.addEventListener("keydown", onKeyDown);
+		return () => window.removeEventListener("keydown", onKeyDown);
+	}, [dismiss]);
+
+	/**
+	 * Purely informational popups bow out on their own. Anything offering a way
+	 * to see more waits for a real choice — and the welcome popup must wait too,
+	 * since its button is what requests motion permission.
+	 */
+	const autoDismisses = !!message?.actions.every(
+		(action) => action.kind === "dismiss"
+	);
+
+	// Long copy needs longer on screen than "I love K-Pop", so the delay is read
+	// off the word count rather than being one flat number for every board.
+	const readingMs = useMemo(() => {
+		if (!message) return 0;
+		const words = message.html
+			.replace(/<[^>]+>/g, " ")
+			.trim()
+			.split(/\s+/).length;
+		// ~185wpm, plus a beat to notice the popup arrived at all.
+		return Math.min(20000, 4000 + words * 320);
+	}, [message]);
+
+	// Once someone engages, the popup is theirs to close — a timer that fires
+	// mid-sentence is worse than one that never fires.
+	const [readerEngaged, setReaderEngaged] = useState(false);
+	const engage = useCallback(() => setReaderEngaged(true), []);
+
+	useEffect(() => {
+		if (!autoDismisses || readerEngaged) return;
+		const timer = setTimeout(dismiss, readingMs);
+		return () => clearTimeout(timer);
+	}, [autoDismisses, readerEngaged, readingMs, dismiss]);
 
 	const handleGesturePermission = async () => {
 		try {
@@ -78,7 +204,7 @@ const CloudPopup = () => {
 				}
 			).DeviceOrientationEvent;
 
-			let granted = grantedMotionPermission ?? false;
+			let granted = grantedMotionPermission;
 
 			// Prefer feature detection over isMobile. iOS Safari exposes requestPermission on these constructors.
 			if (typeof DME?.requestPermission === "function") {
@@ -107,336 +233,101 @@ const CloudPopup = () => {
 		}
 	};
 
-	const setShowCloudPopup = gameContext?.setShowCloudPopup;
+	const runAction = async (action: PopupAction) => {
+		if (action.kind === "ready") {
+			await handleGesturePermission();
+			dismiss();
+			return;
+		}
+		if (action.kind === "open") {
+			dismiss(() => setShowMore?.(true));
+			return;
+		}
+		dismiss();
+	};
 
-	const setShowMore = gameContext?.setShowMore;
-
-	const boardName = gameContext?.boardName || "default";
-
-	const headsetMessage = [
-		`<p>I am always listening to music when coding.</p>`,
-		`<p>Music helps me focus and stay in the zone.</p>`,
-		`<p>My favorite genres are electronic and indie rock.</p>`,
-		`<p>I love discovering new artists and tracks.</p>`,
-		`<p>Music is my constant companion while I work.</p>`,
-		`<p>My favorite genre is K-Pop.</p>`,
-		`<p>My current favorite song is "Drowning" by Woodz</p>`,
-		`<p>Music inspires my creativity and keeps me motivated.</p>`,
-		`<p>What music do you like to listen to?</p>`,
-	];
-
-	const techStackMessage = [
-		`<p>I love working with React, TypeScript, and Node.js.</p>`,
-		`<p>My favorite tools include VSCode, Git, and Figma.</p>
-    <p>I enjoy building scalable and efficient web applications.</p>`,
-		`<p>I'm passionate about learning new technologies and improving my skills.</p>`,
-		`<p>My favorite libraries are React and Tailwind CSS.</p>`,
-		`<p>I love using Next.js for building server-rendered React applications.</p>`,
-		`<p>I'm always exploring new frameworks and libraries to enhance my development process.</p>
-    <p>What technologies do you enjoy working with?</p>`,
-	];
-
-	// Compose visitor-type intro + control instructions
-	const controlsMobile = `<p>Hi there, I'm Ufuoma. <br />
-      Welcome to the game! <br />
-      Tap the Dice to start rolling!. <br />
-      Make sure to <span class="font-bold text-orange-400">grant gesture access</span> so you can <span class="font-bold text-orange-400">SHAKE </span> your phone to roll the dice!</p>
-      <p > You can use <span class="font-bold text-orange-400">two fingers to zoom into and out and to pan left and right</span> of the board for a custom experience!</p>`;
-
-	const controlsDesktop = `<p>Hi there, I'm Ufuoma. <br />
-      Welcome to the game! 
-      Click the Dice to start rolling!</p>
-       <p > You can use your mouse or trackpad to <br /> <span class="font-bold text-orange-400"> zoom into and out and to pan left and right</span> of the board for a custom experience!</p>`;
-
-	const baseControls = isMobile ? controlsMobile : controlsDesktop;
-
-	let typeIntro = "";
-	if (visitorType === "recruiter") {
-		typeIntro = `<p>Quickly scan highlights, view my <strong>resume</strong>, and see key skills in the menu. </p>`;
-	} else if (visitorType === "developer") {
-		typeIntro = `<p>Explore my stack, repos, and playgrounds.</p>`;
-	} else {
-		typeIntro = `<p>Have fun exploring my world.</p>`;
-	}
-
-	const welcomeText = `${baseControls}${typeIntro}`;
-
-	const message = [
-		{
-			name: "default",
-			title:
-				visitorType === "recruiter"
-					? "Welcome Recruiter!"
-					: visitorType === "developer"
-					? "Hey Developer!"
-					: "Welcome!",
-			text: welcomeText,
-		},
-		{
-			name: "rollAgain",
-			title: "Roll Again!",
-			text:
-				visitorType === "recruiter"
-					? `<p>Ready to see more of my technical journey? <br />
-					${
-						isMobile && grantedMotionPermission
-							? "Shake"
-							: isMobile
-							? "Tap"
-							: "Click"
-					} the Dice to explore further!</p>`
-					: visitorType === "developer"
-					? `<p>Want to check out more tech fun? <br />
-					${
-						isMobile && grantedMotionPermission
-							? "Shake"
-							: isMobile
-							? "Tap"
-							: "Click"
-					} the Dice to dive deeper!</p>`
-					: `<p>The odds are in your favor! <br />
-					${
-						isMobile && grantedMotionPermission
-							? "Shake"
-							: isMobile
-							? "Tap"
-							: "Click"
-					} the Dice to roll again!</p>`,
-		},
-		{
-			name: "about",
-			title: "About Me",
-			text:
-				visitorType === "recruiter"
-					? `<p>Hi, I'm Ufuoma! I'm a dedicated software developer with a proven track record in building interactive and scalable applications. Explore this board to quickly understand my expertise and career highlights.</p>`
-					: visitorType === "developer"
-					? `<p>Hey, I'm Ufuoma! I love geeking out over code, experimenting with frameworks, and sharing fun tech experiments. Let's talk about stacks, projects, and cool tools!</p>`
-					: `<p>Hi, I'm Ufuoma! I'm a software developer passionate about creating engaging and interactive experiences. Welcome to my world — feel free to explore!</p>`,
-		},
-		{
-			name: "laptop",
-			title: "Tech Stuff",
-			text: techStackMessage[
-				Math.floor(Math.random() * techStackMessage.length)
-			],
-		},
-		{
-			name: "skills",
-			title: "Skills",
-			text:
-				visitorType === "recruiter"
-					? `<p>My skills span frontend and backend development, with strengths in JavaScript, TypeScript, React, and Node.js. You’ll also find design and problem‑solving abilities highlighted here.</p>`
-					: visitorType === "developer"
-					? `<p>I work with stacks like React, Next.js, Node.js, and TypeScript. I’m into exploring new libraries, frameworks, and building fun side projects too!</p>`
-					: `<p>I have a diverse skill set that includes web development, design, and more. Let's roll the dice to see what skill you'll learn about next!</p>`,
-		},
-		{
-			name: "projects",
-			title: "Projects",
-			text:
-				visitorType === "recruiter"
-					? `<p>Here are some of my key projects that showcase my ability to deliver results, solve problems, and add value to teams. Each project highlights professional growth and impact.</p>`
-					: visitorType === "developer"
-					? `<p>Check out my projects — from experiments with frameworks to fun side builds. Dive in to see code, stacks, and ideas I’ve been exploring!</p>`
-					: `<p>Check out some of my projects. Each one is a unique adventure waiting to be explored!</p>`,
-		},
-		{
-			name: "backToStart",
-			title: "Back to Start",
-			text: `<p>You can always return to the start of the game. Just roll the dice again!</p>`,
-		},
-		{
-			name: "headset",
-			title: "Music",
-			text:
-				headsetMessage[Math.floor(Math.random() * headsetMessage.length)] +
-				`\n <p>Special thanks to <strong> <a href="https://music.apple.com/ng/artist/the-kazez/1471408685" target="_blank" class="underline">The Kazez</a></strong> for the background music!</p>`,
-		},
-		{
-			name: "contact",
-			title: "Contact Me",
-			text:
-				visitorType === "recruiter"
-					? `<p>Interested in discussing opportunities? Reach out and let’s talk about how I can add value to your team.</p>`
-					: visitorType === "developer"
-					? `<p>Got an idea, repo, or side project? Let’s connect and maybe collaborate!</p>`
-					: `<p>Let's create something amazing together!</p>`,
-		},
-		{
-			name: "controller",
-			title: "Game Break!",
-			text: `<p>Pause to play some of my favorite games or continue your journey through the board!</p>`,
-		},
-		{
-			name: "resume",
-			title: "Resume",
-			text:
-				visitorType === "recruiter"
-					? `<p>Here’s my resume — a quick way to view my work experience, skills, and achievements tailored for hiring decisions.</p>`
-					: visitorType === "developer"
-					? `<p>Take a look at my resume to see the projects, tools, and stacks I’ve worked with in depth.</p>`
-					: `<p>Check out my resume to see my professional journey and accomplishments.</p>`,
-		},
-	];
-
-	const currentMessage = message.find((msg) => msg.name === boardName);
+	if (!message) return null;
 
 	return (
-		<>
-			{currentMessage && (
-				<div
-					ref={popupRef}
-					style={{ visibility: bgLoaded ? "visible" : "hidden" }}
-					className="z-[2000] w-full lg:w-9/12 xl:w-6/12 fixed bottom-0 right-0 will-change-transform transform-gpu">
-					<div className=" w-full  text-lg  bg-[url('/images/cloudPop.png')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative">
-						<div className="w-9/12 mx-auto space-y-3 h-full">
-							<h2 className="font-fraunces italic text-4xl text-orange-400 text-center mt-10 md:mt-20 pt-2">
-								{currentMessage?.title}
-							</h2>
-							<div
-								className="text-[#fc045c] text-center text-xl"
-								dangerouslySetInnerHTML={{ __html: currentMessage?.text || "" }}
-							/>
-							{boardName === "default" && (
-								<div className="flex justify-center my-5">
-									<Button
-										size="lg"
-										className="bg-white relative z-[200] disabled:opacity-50 disabled:cursor-not-allowed"
-										onClick={async () => {
-											await handleGesturePermission();
-											if (popupRef.current) {
-												gsap.to(popupRef.current, {
-													xPercent: 100,
-													autoAlpha: 0,
-													duration: 0.5,
-													ease: "power2.in",
-													onComplete: () => {
-														setShowCloudPopup?.(false);
-													},
-												});
-											}
-										}}>
-										<Icon
-											icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-											width="50"
-											height="50"
-											color="oklch(75% 0.183 55.934)"
-											className="w-12 h-12 mr-2"
-										/>
-										<p className="font-fraunces italic text-2xl text-orange-400">
-											I'm ready to play!
-										</p>
-									</Button>
-								</div>
-							)}
+		<div
+			ref={popupRef}
+			role="dialog"
+			aria-labelledby={titleId}
+			style={{ visibility: artReady ? "visible" : "hidden" }}
+			// pointerMove rather than pointerEnter: the panel slides in from the
+			// right and can pass under a resting cursor, which isn't engagement.
+			onPointerMove={engage}
+			onPointerDown={engage}
+			onFocusCapture={engage}
+			className="fixed bottom-0 right-0 z-[2000] w-full will-change-transform transform-gpu lg:w-9/12 xl:w-6/12">
+			<div className="relative flex w-full items-center justify-center rounded-lg bg-[url('/images/cloudPop.png')] bg-cover bg-top bg-no-repeat py-10 text-lg">
+				<div className="relative mx-auto mt-10 w-9/12 md:mt-20">
+					<button
+						type="button"
+						onClick={() => dismiss()}
+						aria-label="Close"
+						className="absolute -top-1 right-0 rounded-full p-1 text-orange-400/70 transition-colors hover:bg-orange-100 hover:text-orange-500">
+						<Icon icon="mdi:close" width="22" height="22" />
+					</button>
 
-							{["about", "laptop", "headset", "rollAgain"].includes(
-								boardName
-							) && (
-								<div className="flex gap-3 justify-center my-5 flex-wrap">
-									<Button
-										size="lg"
-										type="button"
-										className="bg-white relative z-[200] "
-										onClick={() => {
-											if (popupRef.current) {
-												gsap.to(popupRef.current, {
-													xPercent: 100,
-													autoAlpha: 0,
-													duration: 0.5,
-													ease: "power2.in",
-													onComplete: () => {
-														setShowCloudPopup?.(false);
-													},
-												});
-											}
-										}}>
-										<Icon
-											icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-											width="50"
-											height="50"
-											color="oklch(75% 0.183 55.934)"
-											className="w-12 h-12 mr-2"
-										/>
-										<p className="font-fraunces italic text-2xl text-orange-400">
-											Dismiss
-										</p>
-									</Button>
-								</div>
-							)}
+					<h2
+						id={titleId}
+						className="pt-2 pr-8 text-center font-fraunces text-3xl italic text-orange-400 md:text-4xl">
+						{message.title}
+					</h2>
 
-							{[
-								"skills",
-								"projects",
-								"contact",
-								"controller",
-								"resume",
-							].includes(boardName) && (
-								<div className="flex gap-3 justify-center my-5 flex-wrap">
-									<Button
-										size="lg"
-										type="button"
-										className="bg-orange-400 relative z-[200] "
-										onClick={() => {
-											if (popupRef.current) {
-												gsap.to(popupRef.current, {
-													xPercent: 100,
-													autoAlpha: 0,
-													duration: 0.5,
-													ease: "power2.in",
-													onComplete: () => {
-														setShowCloudPopup?.(false);
-														setShowMore?.(true);
-													},
-												});
-											}
-										}}>
-										<Icon
-											icon="ep:info-filled"
-											width="50"
-											height="50"
-											color="white"
-											className="w-12 h-12 mr-2"
-										/>
-										<p className="font-fraunces italic text-2xl text-white">
-											Jump To
-										</p>
-									</Button>
-									<Button
-										size="lg"
-										type="button"
-										className="bg-white relative z-[200] "
-										onClick={() => {
-											if (popupRef.current) {
-												gsap.to(popupRef.current, {
-													xPercent: 100,
-													autoAlpha: 0,
-													duration: 0.2,
-													ease: "power2.in",
-													onComplete: () => {
-														setShowCloudPopup?.(false);
-													},
-												});
-											}
-										}}>
-										<Icon
-											icon="streamline-pixel:entertainment-events-hobbies-board-game-dice"
-											width="50"
-											height="50"
-											color="oklch(75% 0.183 55.934)"
-											className="w-12 h-12 mr-2"
-										/>
-										<p className="font-fraunces italic text-2xl text-orange-400">
-											Dismiss
-										</p>
-									</Button>
-								</div>
-							)}
-						</div>
+					<div className="relative">
+						<div
+							ref={bodyRef}
+							// Scrolling the copy is the clearest "I'm still reading" there is,
+							// and it's the only one a touch device gives us.
+							onScroll={engage}
+							className="no-scrollbar mt-3 max-h-[38vh] overflow-y-auto text-center text-lg text-[#fc045c] md:text-xl [&_p+p]:mt-2"
+							dangerouslySetInnerHTML={{ __html: message.html }}
+						/>
+						{hasMore && (
+							<div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center pb-0.5">
+								<Icon
+									icon="mdi:chevron-down"
+									width="24"
+									height="24"
+									className="animate-bounce rounded-full bg-white/90 text-orange-400 shadow-sm"
+								/>
+							</div>
+						)}
+					</div>
+
+					<div className="my-5 flex flex-wrap justify-center gap-3">
+						{message.actions.map((action, index) => {
+							const primary = index === 0;
+							return (
+								<Button
+									key={action.kind}
+									size="lg"
+									type="button"
+									onClick={() => runAction(action)}
+									className={`relative z-[200] rounded-full transition-transform hover:-translate-y-0.5 ${
+										primary
+											? "bg-orange-400 text-white hover:bg-orange-400"
+											: "border border-orange-300 bg-white text-orange-400 hover:bg-white"
+									}`}>
+									<Icon
+										icon={ACTION_ICONS[action.kind]}
+										width="28"
+										height="28"
+										color={primary ? "white" : "oklch(75% 0.183 55.934)"}
+										className="mr-1 h-7 w-7"
+									/>
+									<span className="font-fraunces text-xl italic md:text-2xl">
+										{action.label}
+									</span>
+								</Button>
+							);
+						})}
 					</div>
 				</div>
-			)}
-		</>
+			</div>
+		</div>
 	);
 };
 

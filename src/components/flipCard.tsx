@@ -1,5 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "./ui/button";
+import GameShell, {
+	GameOverCard,
+	gameBoardSquare,
+	gameChip,
+} from "./gameShell";
 
 // Simple emoji icons for pairs (no external deps)
 const ICONS = [
@@ -22,6 +26,9 @@ const ICONS = [
 	"🧮",
 	"🔌",
 ];
+
+// 18 pairs land on a 6 x 6 board — square, so it fits the stage whole.
+const COLUMNS = 6;
 
 // Card shape
 type Card = {
@@ -61,6 +68,10 @@ const FlipCard: React.FC<FlipCardProps> = ({ setGame }) => {
 	const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
 	const allMatched = useMemo(() => deck.every((c) => c.matched), [deck]);
+	const matchedPairs = useMemo(
+		() => deck.filter((c) => c.matched).length / 2,
+		[deck],
+	);
 	const gameOver = timeLeft <= 0 || allMatched;
 
 	// Start / tick timer
@@ -101,17 +112,19 @@ const FlipCard: React.FC<FlipCardProps> = ({ setGame }) => {
 
 	function revealCard(cardId: string) {
 		setDeck((prev) =>
-			prev.map((c) => (c.id === cardId ? { ...c, flipped: true } : c))
+			prev.map((c) => (c.id === cardId ? { ...c, flipped: true } : c)),
 		);
 	}
 	function hideCards(a: string, b: string) {
 		setDeck((prev) =>
-			prev.map((c) => (c.id === a || c.id === b ? { ...c, flipped: false } : c))
+			prev.map((c) =>
+				c.id === a || c.id === b ? { ...c, flipped: false } : c,
+			),
 		);
 	}
 	function matchCards(a: string, b: string) {
 		setDeck((prev) =>
-			prev.map((c) => (c.id === a || c.id === b ? { ...c, matched: true } : c))
+			prev.map((c) => (c.id === a || c.id === b ? { ...c, matched: true } : c)),
 		);
 	}
 
@@ -151,35 +164,48 @@ const FlipCard: React.FC<FlipCardProps> = ({ setGame }) => {
 	};
 
 	return (
-		<div className="w-full flex flex-col items-center justify-start gap-6 py-6">
-			{/* Header / HUD */}
-			<div className="w-full max-w-4xl flex items-center justify-between px-4">
-				<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
-					Flip Match
-				</h2>
-				<div className="flex items-center gap-3">
-					<Button
-						size="lg"
-						className={`px-3 py-1 rounded-md text-white ${
+		<GameShell
+			title="Flip Match"
+			hint="Turn two cards over. Find every pair before the clock runs out."
+			onRestart={resetGame}
+			onBack={() => setGame(null)}
+			status={
+				<>
+					<span
+						className={`${gameChip} ${
 							timeLeft <= 10
 								? "bg-red-500"
 								: timeLeft <= 25
-								? "bg-yellow-500"
-								: "bg-emerald-600"
+									? "bg-yellow-500"
+									: "bg-emerald-600"
 						}`}>
 						⏱ {timeLeft}s
-					</Button>
-					<Button
-						size="lg"
-						onClick={resetGame}
-						className="px-3 py-1 rounded-md bg-[#fc045c] text-white hover:bg-slate-700 transition">
-						Restart
-					</Button>
-				</div>
-			</div>
-
-			{/* Grid */}
-			<div className="grid grid-cols-4 sm:grid-cols-6 gap-4 w-full max-w-4xl px-4">
+					</span>
+					<span className={`${gameChip} bg-slate-700`}>
+						Pairs: {matchedPairs}/{ICONS.length}
+					</span>
+				</>
+			}
+			overlay={
+				gameOver ? (
+					<GameOverCard
+						won={allMatched}
+						message={
+							allMatched
+								? `Amazing! You finished with ${timeLeft}s left.`
+								: `You matched ${matchedPairs} of ${ICONS.length} pairs — try again and beat the clock.`
+						}
+						onRestart={resetGame}
+						onBack={() => setGame(null)}
+					/>
+				) : null
+			}>
+			<div
+				className={`${gameBoardSquare} grid gap-[1.5%]`}
+				style={{
+					gridTemplateColumns: `repeat(${COLUMNS}, minmax(0,1fr))`,
+					gridTemplateRows: `repeat(${(ICONS.length * 2) / COLUMNS}, minmax(0,1fr))`,
+				}}>
 				{deck.map((card) => {
 					const showFace = card.flipped || card.matched;
 					return (
@@ -188,7 +214,8 @@ const FlipCard: React.FC<FlipCardProps> = ({ setGame }) => {
 							type="button"
 							disabled={locked || card.matched}
 							onClick={() => handlePick(card)}
-							className={`relative aspect-square select-none [perspective:1000px] rounded-lg ${
+							aria-label={showFace ? card.icon : "Hidden card"}
+							className={`relative select-none rounded-lg [perspective:1000px] ${
 								card.matched ? "pointer-events-none" : ""
 							}`}>
 							{/* Fade cover when matched */}
@@ -198,7 +225,7 @@ const FlipCard: React.FC<FlipCardProps> = ({ setGame }) => {
 								}`}>
 								{/* Card inner */}
 								<div
-									className={`w-full h-full rounded-lg transition-transform duration-500 [transform-style:preserve-3d] ${
+									className={`h-full w-full rounded-lg transition-transform duration-500 [transform-style:preserve-3d] ${
 										showFace ? "[transform:rotateY(180deg)]" : ""
 									} ${
 										// subtle wiggle/scale when selected/open
@@ -207,9 +234,9 @@ const FlipCard: React.FC<FlipCardProps> = ({ setGame }) => {
 											: "hover:scale-105"
 									}`}>
 									{/* Back */}
-									<div className="absolute inset-0 backface-hidden rounded-lg bg-gradient-to-br from-pink-600 to-blue-300 shadow-md flex items-center justify-center text-white text-3xl font-bold" />
+									<div className="absolute inset-0 rounded-lg bg-gradient-to-br from-pink-600 to-blue-300 shadow-md backface-hidden" />
 									{/* Front */}
-									<div className="absolute inset-0 rounded-lg bg-white flex items-center justify-center text-4xl [transform:rotateY(180deg)] backface-hidden border border-slate-200 shadow-sm">
+									<div className="absolute inset-0 flex items-center justify-center rounded-lg border border-slate-200 bg-white text-[clamp(1rem,9cqmin,2.5rem)] leading-none shadow-sm backface-hidden [transform:rotateY(180deg)]">
 										<span>{card.icon}</span>
 									</div>
 								</div>
@@ -218,36 +245,7 @@ const FlipCard: React.FC<FlipCardProps> = ({ setGame }) => {
 					);
 				})}
 			</div>
-
-			{/* Game Over Overlay */}
-			{gameOver && (
-				<div className="fixed inset-0 flex items-center justify-center bg-black/50">
-					<div className="bg-white rounded-xl p-6 w-full max-w-md text-center shadow-xl">
-						<div className="text-5xl mb-2">{allMatched ? "🎉" : "⏰"}</div>
-						<h3 className="text-2xl font-semibold mb-2 font-fraunces italic text-orange-400">
-							{allMatched ? "You matched them all!" : "Time's up!"}
-						</h3>
-						<p className="text-slate-600 mb-6">
-							{allMatched
-								? `Amazing! You finished with ${timeLeft}s left.`
-								: "Try again and beat the clock."}
-						</p>
-						<Button
-							size="lg"
-							onClick={resetGame}
-							className="px-4 py-2 rounded-md bg-[#fc045c] font-fraunces italic text-lg text-white hover:bg-slate-700 transition">
-							Play Again
-						</Button>
-						<Button
-							size="lg"
-							onClick={() => setGame(null)}
-							className="px-4 py-2 rounded-md bg-orange-400 font-fraunces italic text-lg text-white hover:bg-slate-700 transition ms-2">
-							Back to Games
-						</Button>
-					</div>
-				</div>
-			)}
-		</div>
+		</GameShell>
 	);
 };
 

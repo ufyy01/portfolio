@@ -11,6 +11,13 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/components/ui/drawer";
+import {
+	drawerBody,
+	drawerCard,
+	drawerCloseButton,
+	drawerHeading,
+	drawerPanel,
+} from "@/lib/drawerStyles";
 import { FileText, Download } from "lucide-react";
 
 const Resume = () => {
@@ -22,7 +29,7 @@ const Resume = () => {
 	const [previewOpen, setPreviewOpen] = useState(false);
 
 	const [isIOS, setIsIOS] = useState(false);
-	const pdfPath = "/Ufuoma Ohwo-Resume.pdf";
+	const pdfPath = "/Ufuoma_Ohworakpo_Software_Engineer_CV.pdf";
 	const pdfUrl = encodeURI(pdfPath);
 
 	useEffect(() => {
@@ -45,16 +52,18 @@ const Resume = () => {
 	return (
 		<Drawer open={showMore} onOpenChange={setShowMore}>
 			<DrawerContent
-				className="z-[2000] bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg w-screen md:w-8/12 pb-5 max-h-[90svh] h-[90svh] md:h-auto overflow-hidden flex flex-col after:hidden"
+				className={`${drawerPanel} h-[90svh] max-h-[90svh] md:h-auto`}
 				style={{ WebkitOverflowScrolling: "touch" }}>
 				<div
-					className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y pr-2"
+					className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain pr-2"
 					style={{ WebkitOverflowScrolling: "touch" }}>
 					<DrawerHeader>
-						<DrawerTitle className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
+						<DrawerTitle
+							className={`${drawerHeading} my-4 text-2xl lg:text-4xl`}>
 							Download my resume
 						</DrawerTitle>
-						<DrawerDescription className="w-10/12 mx-auto text-lg  text-white text-center lg:text-start text-pretty">
+						<DrawerDescription
+							className={`${drawerBody} w-10/12 mx-auto text-pretty text-center text-lg lg:text-start`}>
 							I'm currently looking for new opportunities and would love to
 							connect with you. If you're interested in my work or have any
 							questions, please feel free to reach out. You can view my resume
@@ -67,32 +76,32 @@ const Resume = () => {
 							<button
 								type="button"
 								onClick={() => setPreviewOpen(true)}
-								className="group mt-2 mb-4 w-56 h-56 rounded-2xl border border-white/30 bg-white/20 hover:bg-white/30 transition shadow-sm flex flex-col items-center justify-center">
+								className={`${drawerCard} group mb-4 mt-2 flex h-56 w-56 flex-col items-center justify-center transition duration-300 hover:-translate-y-0.5 hover:shadow-xl`}>
 								<FileText
 									size={88}
-									className="text-white/90 group-hover:text-white"
+									className="text-[#fc045c]/80 transition-colors group-hover:text-[#fc045c]"
 								/>
-								<span className="mt-3 text-white font-semibold">
+								<span className="mt-3 font-semibold text-slate-800">
 									Preview Resume (PDF)
 								</span>
-								<span className="mt-1 text-white/70 text-sm">
+								<span className="mt-1 text-sm text-slate-500">
 									Click to open viewer
 								</span>
 							</button>
 						)}
 
 						{previewOpen && (
-							<div className="relative w-full max-w-5xl h-[70vh] rounded-lg overflow-hidden border border-white/20 bg-black/30">
+							<div className="relative h-[70vh] w-full max-w-5xl overflow-hidden rounded-lg border border-slate-900/10 bg-white shadow-lg">
 								{/* Small discrete download button */}
 								<a
 									href={pdfUrl}
 									download
-									className="absolute top-2 right-2 z-10 inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-sm bg-white/90 text-slate-900 hover:bg-white">
+									className="absolute right-2 top-2 z-10 inline-flex items-center gap-2 rounded-md bg-[#fc045c] px-3 py-1.5 text-sm text-white shadow-md hover:bg-[#d0034c]">
 									<Download size={16} /> Download PDF
 								</a>
 								{/* PDF viewer */}
 								{isIOS ? (
-									<div className="w-full h-full flex flex-col items-center justify-center gap-3 p-4 text-white/90">
+									<div className="flex h-full w-full flex-col items-center justify-center gap-3 p-4 text-slate-700">
 										<p className="text-center text-sm md:text-base">
 											Inline PDF preview is limited on iPhone/iPad. Tap below to
 											open the resume in a new tab.
@@ -101,7 +110,7 @@ const Resume = () => {
 											href={pdfUrl}
 											target="_blank"
 											rel="noopener noreferrer"
-											className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-white/90 text-slate-900 hover:bg-white">
+											className="inline-flex items-center gap-2 rounded-md bg-[#fc045c] px-4 py-2 text-white hover:bg-[#d0034c]">
 											<FileText size={16} /> Open Fullscreen
 										</a>
 									</div>
@@ -109,12 +118,12 @@ const Resume = () => {
 									<object
 										data={`${pdfUrl}#view=FitH`}
 										type="application/pdf"
-										className="w-full h-full">
+										className="h-full w-full">
 										{/* Fallback for browsers that block object */}
 										<iframe
 											src={`${pdfUrl}#view=FitH`}
 											title="Resume PDF"
-											className="w-full h-full"
+											className="h-full w-full"
 										/>
 									</object>
 								)}
@@ -123,8 +132,8 @@ const Resume = () => {
 					</div>
 				</div>
 				<DrawerFooter>
-					<DrawerClose>
-						<Button size="lg" className="bg-white text-orange-400 ">
+					<DrawerClose asChild>
+						<Button size="lg" className={drawerCloseButton}>
 							Back to board
 						</Button>
 					</DrawerClose>

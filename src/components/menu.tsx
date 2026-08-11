@@ -1,6 +1,7 @@
-import { Icon } from "@iconify/react/dist/iconify.js";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { Button } from "./ui/button";
+import HudButton from "./hudButton";
+import { hudDivider, hudMenuItem } from "@/lib/hudStyles";
 import { GameContext } from "@/context/gameContext";
 import {
 	Drawer,
@@ -30,79 +31,91 @@ const Menu = () => {
 		setIsOpen(false);
 	};
 
+	const openDrawer = (drawer: "camera" | "movement") => {
+		setActiveDrawer(drawer);
+		setIsDrawerOpen(true);
+		setIsOpen(false);
+	};
+
+	// Dismiss on anything that isn't the menu itself — a click on the board, on
+	// the sound toggle, or Escape.
+	useEffect(() => {
+		if (!isOpen) return;
+
+		const onKeyDown = (event: KeyboardEvent) => {
+			if (event.key === "Escape") setIsOpen(false);
+		};
+
+		const onPointerDown = (event: PointerEvent) => {
+			// Marker attribute rather than refs: the trigger and the list are
+			// siblings, and the trigger has to be excluded or its own toggle would
+			// immediately reopen what this just closed.
+			const target = event.target as Element | null;
+			if (target?.closest?.("[data-hud-menu]")) return;
+			setIsOpen(false);
+		};
+
+		window.addEventListener("keydown", onKeyDown);
+		// Capture phase: the r3f canvas stops propagation on its own pointer
+		// events, so a bubble-phase listener would never see a click on the board.
+		document.addEventListener("pointerdown", onPointerDown, true);
+		return () => {
+			window.removeEventListener("keydown", onKeyDown);
+			document.removeEventListener("pointerdown", onPointerDown, true);
+		};
+	}, [isOpen]);
+
+	// One table instead of two hand-styled blocks: the four copies of the same
+	// class string were how the controls drifted out of sync in the first place.
+	const menuItems =
+		visitorType === "recruiter"
+			? [
+					{ label: "Check out my Resume", onSelect: () => jumpToBoardPosition(11) },
+					{ label: "Contact Me", onSelect: () => jumpToBoardPosition(8) },
+					{ label: "Check out my Skills", onSelect: () => jumpToBoardPosition(4) },
+					{ label: "Check out my Projects", onSelect: () => jumpToBoardPosition(5) },
+				]
+			: visitorType === "developer"
+				? [
+						{ label: "Check out my Camera Logic", onSelect: () => openDrawer("camera") },
+						{ label: "Check out my Movement Logic", onSelect: () => openDrawer("movement") },
+						{ label: "Check out my Skills", onSelect: () => jumpToBoardPosition(4) },
+						{ label: "Contact Me", onSelect: () => jumpToBoardPosition(8) },
+					]
+				: [];
+
 	return (
-		<div className="z-[6000]">
-			<div
-				className="absolute top-26 right-4  p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg flex flex-col items-center hover:bg-white/90 transition-colors duration-300"
+		<>
+			{/* Sits inside the shared HUD panel next to the sound toggle, so the two
+			    controls read as one dock. */}
+			<HudButton
+				icon="heroicons:squares-2x2-20-solid"
+				label="Menu"
+				className={hudDivider}
+				data-hud-menu=""
+				aria-haspopup="true"
+				aria-expanded={isOpen}
 				onClick={() => {
 					setIsOpen(!isOpen);
 					if (boardPosition === "default") {
 						setBoardPosition?.(0);
 					}
-				}}>
-				<Icon icon="ep:menu" width="26" height="26" color="#fc045c" />
-				<p className="font-fraunces text-lg text-[#fc045c]">Menu</p>
-			</div>
-			{isOpen && visitorType === "recruiter" && (
-				<div className="absolute top-48 right-4 flex flex-col gap-2">
-					<Button
-						className="text-lg font-fraunces text-[#fc045c] italic p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
-						onClick={() => jumpToBoardPosition(11)}>
-						Check out my Resume
-					</Button>
-
-					<Button
-						className="text-lg font-fraunces text-[#fc045c] italic  p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
-						onClick={() => jumpToBoardPosition(8)}>
-						Contact Me
-					</Button>
-
-					<Button
-						className="text-lg font-fraunces text-[#fc045c] italic  p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
-						onClick={() => jumpToBoardPosition(4)}>
-						Check out my Skills
-					</Button>
-
-					<Button
-						className="text-lg font-fraunces text-[#fc045c] italic  p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
-						onClick={() => jumpToBoardPosition(5)}>
-						Check out my Projects
-					</Button>
-				</div>
-			)}
-
-			{isOpen && visitorType === "developer" && (
-				<div className="absolute top-48 right-4 flex flex-col gap-2">
-					<Button
-						className="text-lg font-fraunces text-[#fc045c] italic p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
-						onClick={() => {
-							setActiveDrawer("camera");
-							setIsDrawerOpen(true);
-							setIsOpen(false);
-						}}>
-						Check out my Camera Logic
-					</Button>
-					<Button
-						className="text-lg font-fraunces text-[#fc045c] italic p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
-						onClick={() => {
-							setActiveDrawer("movement");
-							setIsDrawerOpen(true);
-							setIsOpen(false);
-						}}>
-						Check out my Movement Logic
-					</Button>
-
-					<Button
-						className="text-lg font-fraunces text-[#fc045c] italic  p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
-						onClick={() => jumpToBoardPosition(4)}>
-						Check out my Skills
-					</Button>
-
-					<Button
-						className="text-lg font-fraunces text-[#fc045c] italic  p-3 bg-white/30 backdrop-blur-lg border border-white/20 rounded-lg shadow-lg"
-						onClick={() => jumpToBoardPosition(8)}>
-						Contact Me
-					</Button>
+				}}
+			/>
+			{isOpen && menuItems.length > 0 && (
+				// Anchored to the panel that contains the trigger, so the list follows
+				// the dock instead of the hand-tuned `top-48` this used to carry.
+				<div
+					data-hud-menu=""
+					className="absolute top-full right-0 mt-3 flex w-max flex-col gap-2">
+					{menuItems.map((item) => (
+						<Button
+							key={item.label}
+							className={hudMenuItem}
+							onClick={item.onSelect}>
+							{item.label}
+						</Button>
+					))}
 				</div>
 			)}
 
@@ -173,7 +186,7 @@ const Menu = () => {
 					</DrawerContent>
 				</Drawer>
 			)}
-		</div>
+		</>
 	);
 };
 
