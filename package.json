@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "node scripts/optimize-clouds.mjs && vite",
+    "build": "node scripts/optimize-clouds.mjs && tsc -b && vite build",
     "lint": "eslint .",
-    "optimize:images": "node scripts/optimize-clouds.mjs",
+    "images:cap": "node scripts/optimize-clouds.mjs --cap-masters",
     "preview": "vite preview"
   },
   "dependencies": {
