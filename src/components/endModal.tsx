@@ -43,7 +43,7 @@ const EndModal = () => {
 				<div
 					ref={popupRef}
 					className="z-[2000] w-full lg:w-6/12 fixed bottom-0  lg:left-[25%]">
-					<div className=" w-full text-lg bg-[url('/images/cloudPop.webp')] bg-cover bg-no-repeat bg-top h-full rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
+					<div className=" w-full text-lg bg-cloud-pop bg-cover bg-no-repeat bg-top h-full rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
 						<div className="w-9/12 mx-auto space-y-3 h-full text-center mt-5 lg:mt-20 mb-10 text-lg">
 							<h2 className="text-2xl lg:text-4xl font-fraunces italic my-4 text-orange-400">
 								Thank You!

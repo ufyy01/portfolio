@@ -12,6 +12,11 @@
 @font-face {
 	font-family: "helvetica";
 	src: url("/font/Helvetica.woff2") format("woff2");
+	/* Without this the default is `block`, and this is the body font: every word
+	   on the intro card was held back until the file arrived, or for three
+	   seconds, whichever came first. The card is worth more on screen in the
+	   fallback than perfect and late. */
+	font-display: swap;
 }
 
 .font-dm-sans {
@@ -24,6 +29,27 @@
 
 .font-helvetica {
 	font-family: "helvetica", sans-serif;
+}
+
+/* The cloud art behind the popup panels. A background image cannot carry a
+   `srcset`, so the same choice is made with image-set. The panels are never
+   much wider than 600px, so a 1x screen has no use for anything above the 768
+   rung — which is 148KB against the master's 399KB.
+
+   Three declarations, because the last one a browser understands wins: the
+   plain url is the floor, then the prefixed form for older Safari, then the
+   standard one. Kept in step with PANEL_ART in components/cloudPopup.tsx, which
+   preloads whichever of these the screen will ask for. */
+.bg-cloud-pop {
+	background-image: url("/images/cloudPop-768.webp");
+	background-image: -webkit-image-set(
+		url("/images/cloudPop-768.webp") 1x,
+		url("/images/cloudPop.webp") 2x
+	);
+	background-image: image-set(
+		url("/images/cloudPop-768.webp") 1x,
+		url("/images/cloudPop.webp") 2x
+	);
 }
 
 #root {

@@ -1,4 +1,8 @@
 import { Suspense } from "react";
+// First, and for its side effect: it starts reporting load progress to the
+// intro, and the preloads it needs to catch run at the module scope of the
+// imports below.
+import "@/lib/sceneProgress";
 import { Float, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import Dice from "../components/dice";

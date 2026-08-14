@@ -51,7 +51,7 @@ const DiceMore = () => {
 				<div
 					ref={popupRef}
 					className="z-[2000] w-full fixed bottom-0 left-0 flex justify-start">
-					<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-[url('/images/cloudPop.webp')] bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
+					<div className=" w-full md:w-6/12 text-lg 2xl:max-w-[600px] bg-cloud-pop bg-cover bg-no-repeat bg-top rounded-lg flex items-center justify-center py-10 relative mb-10 md:mb-0">
 						<div className="mt-10 w-9/12 text-center">
 							<h2 className=" text-3xl font-fraunces text-[#fc045c] mt-5">
 								You're such a good sport!

@@ -1,5 +1,4 @@
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import CodeBlock from "./codeBlock";
 
 const CameraLogic = () => {
 	return (
@@ -10,7 +9,7 @@ const CameraLogic = () => {
 				model’s center, keeps the camera at the same relative distance, and
 				interpolates the movement for smoothness.
 			</p>
-			<SyntaxHighlighter language="javascript" style={vscDarkPlus}>
+			<CodeBlock>
 				{`const smoothFollow = () => {
         if (!camera || !meshRef.current) return;
           // Smoothly follow the model while preserving current zoom and orientation
@@ -26,7 +25,7 @@ const CameraLogic = () => {
           camera.updateProjectionMatrix();
           camera.lookAt(modelCenter);
         };`}
-			</SyntaxHighlighter>
+			</CodeBlock>
 		</>
 	);
 };

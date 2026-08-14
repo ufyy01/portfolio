@@ -14,9 +14,14 @@ import { GameContext } from "@/context/gameContext";
 import { Button } from "./ui/button";
 import StarField from "./starField";
 import { useIsLowEndAndroid, useSkyTheme } from "@/lib/sky";
-import { usePrefersReducedMotion } from "@/lib/useMoble";
+import { useIsMobile, usePrefersReducedMotion } from "@/lib/useMoble";
 import { useOverflowHint } from "@/lib/useOverflowHint";
 import { BOARD_ROUTES, type BoardRoute } from "@/lib/boardRoutes";
+import {
+	cloudSrcSet,
+	DRIFTING_CLOUD_SIZES,
+	SKY_CLOUD_SIZES,
+} from "@/lib/cloudArt";
 import {
 	describeLastVisit,
 	milestoneFor,
@@ -145,6 +150,16 @@ const OpenScreen = ({
 	// Anything below runs the lightweight version of the intro
 	const lite = isLowEndAndroid || prefersReducedMotion;
 
+	// The clouds are the largest thing on the intro, so the browser treats one of
+	// them as the moment the page "arrived" — and an element still fading up from
+	// nothing does not count as arrived. On a phone the long drift therefore reads
+	// as a slow load rather than as atmosphere. Desktop keeps the full 1.5s: it
+	// has the frames to spare and the wide sky is where the drift actually shows.
+	const isMobile = useIsMobile();
+	const cloudEntrance = isMobile
+		? { duration: 0.6, stagger: 0.03 }
+		: { duration: 1.5, stagger: 0.1 };
+
 	const cloudImages = useMemo(
 		() => (isLowEndAndroid ? images.slice(0, 3) : images),
 		[isLowEndAndroid, images],
@@ -193,9 +208,9 @@ const OpenScreen = ({
 						{
 							x: 0,
 							opacity: 1,
-							duration: 1.5,
+							duration: cloudEntrance.duration,
 							ease: "power2.out",
-							delay: index * 0.1,
+							delay: index * cloudEntrance.stagger,
 						},
 					);
 				});
@@ -259,7 +274,7 @@ const OpenScreen = ({
 			floatRef.current?.kill();
 			ctx.revert();
 		};
-	}, [lite, cloudImages.length]);
+	}, [lite, cloudImages.length, cloudEntrance.duration, cloudEntrance.stagger]);
 
 
 	/** Exit: dice rolls, card lifts away, clouds part, the sky hands over to the scene. */
@@ -404,9 +419,17 @@ const OpenScreen = ({
 						<img
 							key={index}
 							src={src}
+							srcSet={cloudSrcSet(src)}
+							sizes={SKY_CLOUD_SIZES}
 							alt=""
 							aria-hidden="true"
-							loading="lazy"
+							// Deliberately not lazy. These sit in the opening viewport, and
+							// one of them is what the browser measures the page's arrival by,
+							// so deferring them meant waiting for layout before the fetch
+							// could even start — half a second of doing nothing. That was the
+							// right trade when each was a 2048px master; a 768px rung off the
+							// srcset costs little enough that eager wins outright, and the
+							// intro card's paint measured no slower for it.
 							decoding="async"
 							className={`absolute bg-blend-overlay w-[100%] xl:w-[50%] sky-cloud ${sky.cloudTint}`}
 							style={{
@@ -644,6 +667,8 @@ const OpenScreen = ({
 						<img
 							key={index}
 							src={src}
+							srcSet={cloudSrcSet(src)}
+							sizes={DRIFTING_CLOUD_SIZES}
 							alt=""
 							aria-hidden="true"
 							loading="lazy"

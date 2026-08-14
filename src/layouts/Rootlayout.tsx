@@ -8,11 +8,12 @@ import {
 	useLayoutEffect,
 	useRef,
 	useState,
+	useSyncExternalStore,
 } from "react";
 import OpenScreen from "@/components/openScreen";
 import { useIsLowEndAndroid, useSkyTheme } from "@/lib/sky";
 import { POPUP_BOARDS } from "@/lib/popupMessages";
-import { useProgress } from "@react-three/drei";
+import { getLoadProgress, subscribeToLoadProgress } from "@/lib/loadProgress";
 import { GameContext } from "@/context/gameContext";
 import { useContext } from "react";
 import Seo from "@/components/Seo";
@@ -124,7 +125,18 @@ const RootLayout = () => {
 	// said what they came for, and the persona question is only in their way.
 	const [showIntro, setShowIntro] = useState(!playing && !entryRoute);
 
-	const { progress } = useProgress();
+	// Whether the scene's chunk has been asked for yet. Anything else that wants
+	// three — the figure preload below — waits on this, so there is exactly one
+	// moment in the visit where that graph is parsed.
+	const [sceneWarm, setSceneWarm] = useState(false);
+
+	// Published by the scene's chunk once it loads — see lib/sceneProgress. Asking
+	// drei directly would put three in the entry bundle.
+	const progress = useSyncExternalStore(
+		subscribeToLoadProgress,
+		getLoadProgress,
+		getLoadProgress,
+	);
 	// A scene that never paints — no WebGL, a lost context — must not leave the
 	// visitor stuck behind the veil looking at a finished progress bar.
 	const [settleExpired, setSettleExpired] = useState(false);
@@ -192,39 +204,84 @@ const RootLayout = () => {
 		[setBoardPosition, setBoardName],
 	);
 
-	// The intro's button is gated on useProgress, and progress only moves once the
-	// scene's module-scope texture preloads have run. Those used to run at import
-	// time; now that the scene is a lazy chunk, nothing would pull it in until the
-	// click. Warm it here instead — on an idle callback, so the intro gets its
-	// paint before the scene's assets start competing for the connection.
+	// The intro's button is gated on progress, and progress only moves once the
+	// scene's module-scope preloads have run — which nothing pulls in until the
+	// click, now that the scene is a lazy chunk. So it gets warmed from here.
+	//
+	// *When* is the delicate part. Evaluating three, fiber and drei is a single
+	// uninterruptible task worth a few hundred milliseconds on a mid-range phone,
+	// and an idle callback dropped it a beat after the intro painted — right where
+	// a frozen main thread is most obvious, and where taps on the persona buttons
+	// were being swallowed.
+	//
+	// Waiting for the first sign of a person is better than any delay: nobody
+	// reaches the board without touching the page, and between that first touch
+	// and the click on "explore" there is a card to read and a persona to choose —
+	// far longer than the warm needs. The long stop is only for someone who reads
+	// without moving at all.
 	useEffect(() => {
+		// A deep link renders the scene outright, so it is already on its way.
+		if (entryRoute) {
+			setSceneWarm(true);
+			return;
+		}
+
+		const INTENT = [
+			"pointerdown",
+			"pointermove",
+			"touchstart",
+			"keydown",
+			"wheel",
+			"scroll",
+		] as const;
+		// Capture, because the card scrolls in its own container and a scroll event
+		// there does not bubble to the window.
+		const OPTS = { passive: true, capture: true } as const;
+
+		let timer = 0;
+		let warmed = false;
+
 		const warm = () => {
+			if (warmed) return;
+			warmed = true;
+			stopWaiting();
+			setSceneWarm(true);
 			void import("@/pages/Home");
 			void import("@/components/gameLayer");
 		};
 
-		if (typeof window.requestIdleCallback === "function") {
-			const id = window.requestIdleCallback(warm, { timeout: 2000 });
-			return () => window.cancelIdleCallback(id);
+		function stopWaiting() {
+			window.clearTimeout(timer);
+			for (const event of INTENT) {
+				window.removeEventListener(event, warm, OPTS);
+			}
 		}
 
-		const timer = window.setTimeout(warm, 300);
-		return () => window.clearTimeout(timer);
-	}, []);
+		for (const event of INTENT) window.addEventListener(event, warm, OPTS);
+		timer = window.setTimeout(warm, 10000);
+
+		return stopWaiting;
+	}, [entryRoute]);
 
 	// Each of the three figures used to preload itself at module scope, so every
 	// visitor fetched all three and used one. Only the one their answer selects is
 	// worth fetching — and fetching it while they are still reading the intro is
 	// what keeps it from popping in behind the handover.
+	//
+	// Gated on the warm, not just on the answer: the context starts everyone off
+	// as a recruiter, so this fires on mount, and the import below is the same
+	// three-and-drei graph the warm exists to hold back. Waiting for it means the
+	// figure is fetched by a chunk that is already being parsed rather than
+	// summoning that parse a second time, on its own, behind the intro.
 	useEffect(() => {
-		if (!visitorType) return;
+		if (!sceneWarm || !visitorType) return;
 
 		// Dynamic, so drei's loaders resolve from the scene's chunk instead of
 		// being pulled back into the entry bundle.
 		void import("@react-three/drei").then(({ useGLTF }) => {
 			useGLTF.preload(MODEL_FOR_VISITOR[visitorType]);
 		});
-	}, [visitorType]);
+	}, [sceneWarm, visitorType]);
 
 	return (
 		<>

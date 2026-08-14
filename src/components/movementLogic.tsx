@@ -1,5 +1,4 @@
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
+import CodeBlock from "./codeBlock";
 
 const MovementLogic = () => {
 	return (
@@ -10,7 +9,7 @@ const MovementLogic = () => {
 				toward its target, snaps when close enough to trigger arrival logic, and
 				keeps the camera smoothly following along.
 			</p>
-			<SyntaxHighlighter language="javascript" style={vscDarkPlus}>
+			<CodeBlock>
 				{`// Map board positions to 3D coordinates and names
   function meshPosition(boardPosition: number) {
   switch (boardPosition) {
@@ -23,9 +22,9 @@ const MovementLogic = () => {
     default: return { position: { x: -3.5, y: 0.1, z: 3.5 },  name: "default" };
   }
 }`}
-			</SyntaxHighlighter>
+			</CodeBlock>
 
-			<SyntaxHighlighter language="javascript" style={vscDarkPlus}>
+			<CodeBlock>
 				{`const walkSpeed = 1.2;
 const arrivalThreshold = 0.05;
 
@@ -54,7 +53,7 @@ useFrame((_, delta) => {
 
   smoothFollow(); // keep camera locked on
 });`}
-			</SyntaxHighlighter>
+			</CodeBlock>
 		</>
 	);
 };

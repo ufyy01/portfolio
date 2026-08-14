@@ -11,13 +11,34 @@
 		     host is already warm by the time the stylesheet names a file. -->
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<!--
+			Fetched at stylesheet priority but applied out of band. As a plain
+			stylesheet this was the single longest thing standing between the document
+			and its first paint — a cross-origin round trip that nothing on screen was
+			waiting for, since `display=swap` means the headings paint in the fallback
+			either way. The preload gets the bytes moving; `media="print"` is what
+			keeps the parser from stopping for them.
+		-->
+		<link
+			rel="preload"
+			as="style"
+			href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap" />
 		<link
 			rel="stylesheet"
+			media="print"
+			onload="this.media='all'; this.onload=null;"
 			href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap" />
+		<noscript>
+			<link
+				rel="stylesheet"
+				href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap" />
+		</noscript>
 		<!--
-			The clouds are decorative, they fade in on a stagger, and their <img> tags
-			are lazy. Preloading them fought all three: seven 2048px images went out at
-			the highest priority and took the bandwidth the intro card needed to paint.
+			Still no preload for the clouds. They now ship as a srcset ladder, so the
+			markup is what decides which rung a screen gets, and a preload here can
+			only name one file — it would fetch a width most visitors have no use for
+			and then have the real one fetched anyway. The tags themselves are eager,
+			which is where that job belongs.
 		-->
 	</head>
 	<body>

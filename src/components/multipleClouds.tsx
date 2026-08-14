@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from "react";
 import gsap from "gsap";
 import StarField from "./starField";
 import { useSkyTheme } from "@/lib/sky";
+import { BOARD_CLOUD_SIZES, cloudSrcSet } from "@/lib/cloudArt";
 import { usePrefersReducedMotion } from "@/lib/useMoble";
 
 const MultipleClouds = () => {
@@ -62,6 +63,8 @@ const MultipleClouds = () => {
 					<img
 						key={index}
 						src={src}
+						srcSet={cloudSrcSet(src)}
+						sizes={BOARD_CLOUD_SIZES}
 						alt={`Cloud ${index + 1}`}
 						className={`absolute w-[60%] xl:w-[30%] cloud-img ${sky.cloudTint}`}
 						style={{

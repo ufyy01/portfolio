@@ -23,7 +23,12 @@ interface DeviceOrientationEventWithPermission extends DeviceOrientationEvent {
 	requestPermission?: () => Promise<"granted" | "denied">;
 }
 
-const PANEL_ART = "/images/cloudPop.webp";
+// Whatever `.bg-cloud-pop` is about to ask for — the pair has to match the
+// image-set in index.css, or this waits on one file while the panel paints from
+// another and the art still pops in mid-slide.
+const PANEL_ART = "/images/cloudPop-768.webp";
+const PANEL_ART_SRCSET =
+	"/images/cloudPop-768.webp 1x, /images/cloudPop.webp 2x";
 
 // Remembered across popups so only the very first one waits on the image
 let panelArtReady = false;
@@ -102,6 +107,9 @@ const CloudPopup = () => {
 
 			// Wait for the cloud art the first time, so it can't pop in mid-slide
 			const img = new Image();
+			// srcset before src, so the candidate is chosen once rather than the
+			// fallback being fetched first and then replaced.
+			img.srcset = PANEL_ART_SRCSET;
 			img.src = PANEL_ART;
 			const ready = () => {
 				panelArtReady = true;
@@ -260,7 +268,7 @@ const CloudPopup = () => {
 			onPointerDown={engage}
 			onFocusCapture={engage}
 			className="fixed bottom-0 right-0 z-[2000] w-full will-change-transform transform-gpu lg:w-9/12 xl:w-6/12">
-			<div className="relative flex w-full items-center justify-center rounded-lg bg-[url('/images/cloudPop.webp')] bg-cover bg-top bg-no-repeat py-10 text-lg">
+			<div className="relative flex w-full items-center justify-center rounded-lg bg-cloud-pop bg-cover bg-top bg-no-repeat py-10 text-lg">
 				<div className="relative mx-auto mt-10 w-9/12 md:mt-20">
 					<button
 						type="button"
