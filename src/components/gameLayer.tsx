@@ -74,7 +74,10 @@ const GameLayer = ({ muted, onToggleMute, showIntro }: GameLayerProps) => {
 			    the popup would spend its whole slide-in hidden and be revealed
 			    already sitting there. */}
 			{showCloudPopup && !isWalking && !showIntro && <CloudPopup />}
-			{!isWalking && <DiceMore />}
+			{/* Mounted through the walk, not around it: it owns the timer that clears
+			    its own flag, and unmounting mid-count left the flag set so the notice
+			    reappeared after the next move. It hides itself while walking. */}
+			<DiceMore />
 			<EndModal />
 			{BoardPanel && <BoardPanel />}
 		</>

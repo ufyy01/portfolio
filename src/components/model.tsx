@@ -234,6 +234,9 @@ const Model = () => {
 			return;
 		}
 
+		// This roll is a real move, so any standing "you overshot" notice is stale.
+		setDiceMoreThanEnd?.(false);
+
 		movePathRef.current = path;
 		const first = movePathRef.current.shift();
 		if (typeof first !== "number") return;

@@ -88,6 +88,12 @@ const Dice = () => {
 		if (isRotating || isWalking) return;
 
 		setIsRotating(true);
+		// The die is in the air, so there is no face — and clearing it is what makes
+		// the next landing register. The move effect keys on this value, so rolling
+		// the same number twice in a row set state React considered unchanged, the
+		// effect never re-ran, and the roll silently did nothing. With the weighting
+		// below favouring two faces, that was landing on roughly 4 rolls in 10.
+		setDiceFace?.(null);
 		// The clatter is stretched to the tumble, so it finishes on the landing
 		// rather than half a second before it.
 		sfx.play("roll", ROLL_DURATION);
@@ -120,7 +126,7 @@ const Dice = () => {
 		setLandingPos(
 			new THREE.Vector3(Math.cos(theta) * r, 0, Math.sin(theta) * r)
 		);
-	}, [isRotating, isWalking]);
+	}, [isRotating, isWalking, setDiceFace]);
 
 	useEffect(() => {
 		function handleMotion(event: DeviceMotionEvent) {

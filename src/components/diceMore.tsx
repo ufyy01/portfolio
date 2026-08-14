@@ -16,19 +16,27 @@ const DiceMore = () => {
 
 	const numberToEndGame = boardTotalPosition - boardPosition;
 
+	const isWalking = gameContext?.isWalking || false;
+	// Nothing to say while she is crossing the board — the roll it refers to has
+	// already been answered by the walk.
+	const visible = diceMore && !isWalking;
+
 	const popupRef = useRef<HTMLDivElement>(null);
 
 	useEffect(() => {
-		if (!diceMore || !popupRef.current) return;
+		if (!visible || !popupRef.current) return;
 		gsap.fromTo(
 			popupRef.current,
 			{ x: "100%", opacity: 0 },
 			{ x: "0%", opacity: 1, duration: 1 }
 		);
-	}, [diceMore]);
+	}, [visible]);
 
+	// Keyed on the flag rather than on being on screen: this timer is the only
+	// thing that lowers the flag, so pausing it whenever the notice is hidden is
+	// what let it survive to be shown again later.
 	useEffect(() => {
-		if (!diceMore) return; // only start timer when visible
+		if (!diceMore) return;
 
 		const timeout = setTimeout(() => {
 			setDiceMoreThanEnd?.(false);
@@ -39,7 +47,7 @@ const DiceMore = () => {
 
 	return (
 		<>
-			{diceMore && (
+			{visible && (
 				<div
 					ref={popupRef}
 					className="z-[2000] w-full fixed bottom-0 left-0 flex justify-start">
