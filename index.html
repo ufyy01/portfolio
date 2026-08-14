@@ -5,13 +5,20 @@
 		<link rel="icon" type="image/svg+xml" href="/images/ufy-portfolio.svg" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Ufy's Portfolio | Typescript Developer</title>
-		<link rel="preload" as="image" href="/images/cloud1.png" />
-		<link rel="preload" as="image" href="/images/cloud2.png" />
-		<link rel="preload" as="image" href="/images/cloud3.png" />
-		<link rel="preload" as="image" href="/images/cloud4.png" />
-		<link rel="preload" as="image" href="/images/cloud5.png" />
-		<link rel="preload" as="image" href="/images/cloud6.png" />
-		<link rel="preload" as="image" href="/images/cloud7.png" />
+
+		<!-- Linked rather than @imported from index.css so the preload scanner sees
+		     it in the first bytes of the document, and the handshake to the font
+		     host is already warm by the time the stylesheet names a file. -->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap" />
+		<!--
+			The clouds are decorative, they fade in on a stagger, and their <img> tags
+			are lazy. Preloading them fought all three: seven 2048px images went out at
+			the highest priority and took the bandwidth the intro card needed to paint.
+		-->
 	</head>
 	<body>
 		<div id="root"></div>

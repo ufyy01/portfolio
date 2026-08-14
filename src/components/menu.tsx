@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { lazy, Suspense, useContext, useEffect, useState } from "react";
 import { Button } from "./ui/button";
 import HudButton from "./hudButton";
 import { hudDivider, hudMenuItem } from "@/lib/hudStyles";
@@ -12,8 +12,15 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from "@/components/ui/drawer";
-import CameraLogic from "./cameraLogic";
-import MovementLogic from "./movementLogic";
+// Both of these render highlighted source through Prism, which drags refractor
+// and its language grammars in with it. The drawers open on a menu click at most
+// once a visit, so the grammars have no business being in the first load.
+const CameraLogic = lazy(() => import("./cameraLogic"));
+const MovementLogic = lazy(() => import("./movementLogic"));
+
+const CodeFallback = () => (
+	<span className="block h-40 w-full animate-pulse rounded-lg bg-white/20" />
+);
 
 const Menu = () => {
 	const [isOpen, setIsOpen] = useState(false);
@@ -132,7 +139,9 @@ const Menu = () => {
 									Camera Smooth Follow Logic
 								</DrawerTitle>
 								<DrawerDescription>
-									<CameraLogic />
+									<Suspense fallback={<CodeFallback />}>
+										<CameraLogic />
+									</Suspense>
 								</DrawerDescription>
 							</DrawerHeader>
 						</div>
@@ -166,7 +175,9 @@ const Menu = () => {
 									Model Movement Logic
 								</DrawerTitle>
 								<DrawerDescription>
-									<MovementLogic />
+									<Suspense fallback={<CodeFallback />}>
+										<MovementLogic />
+									</Suspense>
 								</DrawerDescription>
 							</DrawerHeader>
 						</div>

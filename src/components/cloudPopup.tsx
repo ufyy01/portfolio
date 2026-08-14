@@ -23,7 +23,7 @@ interface DeviceOrientationEventWithPermission extends DeviceOrientationEvent {
 	requestPermission?: () => Promise<"granted" | "denied">;
 }
 
-const PANEL_ART = "/images/cloudPop.png";
+const PANEL_ART = "/images/cloudPop.webp";
 
 // Remembered across popups so only the very first one waits on the image
 let panelArtReady = false;
@@ -260,7 +260,7 @@ const CloudPopup = () => {
 			onPointerDown={engage}
 			onFocusCapture={engage}
 			className="fixed bottom-0 right-0 z-[2000] w-full will-change-transform transform-gpu lg:w-9/12 xl:w-6/12">
-			<div className="relative flex w-full items-center justify-center rounded-lg bg-[url('/images/cloudPop.png')] bg-cover bg-top bg-no-repeat py-10 text-lg">
+			<div className="relative flex w-full items-center justify-center rounded-lg bg-[url('/images/cloudPop.webp')] bg-cover bg-top bg-no-repeat py-10 text-lg">
 				<div className="relative mx-auto mt-10 w-9/12 md:mt-20">
 					<button
 						type="button"

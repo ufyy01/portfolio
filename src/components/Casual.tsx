@@ -120,4 +120,3 @@ export function Casual(props: JSX.IntrinsicElements["group"]) {
 	);
 }
 
-useGLTF.preload("/models/casual.glb");

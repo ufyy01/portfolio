@@ -1,3 +1,14 @@
 {
-	"rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+	"rewrites": [{ "source": "/(.*)", "destination": "/index.html" }],
+	"headers": [
+		{
+			"source": "/(images|textures|models|animations|audio|font)/(.*)",
+			"headers": [
+				{
+					"key": "Cache-Control",
+					"value": "public, max-age=2592000, stale-while-revalidate=86400"
+				}
+			]
+		}
+	]
 }

@@ -7,12 +7,12 @@ import { animated as a, useSpring } from "@react-spring/three";
 
 // Preload dice textures once at module load
 const DICE_TEXTURES = [
-	"/textures/dice-1.png", // left face (1)
-	"/textures/dice-6.png", // right face (6)
-	"/textures/dice-4.png", // Top face (4)
-	"/textures/dice-3.png", // Bottom face (3)
-	"/textures/dice-5.png", // Front face (5)
-	"/textures/dice-2.png", // Back face (2)
+	"/textures/dice-1.webp", // left face (1)
+	"/textures/dice-6.webp", // right face (6)
+	"/textures/dice-4.webp", // Top face (4)
+	"/textures/dice-3.webp", // Bottom face (3)
+	"/textures/dice-5.webp", // Front face (5)
+	"/textures/dice-2.webp", // Back face (2)
 ];
 
 // Drei helper: warm the cache so they're ready before the component mounts

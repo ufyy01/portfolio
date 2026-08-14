@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { Float, OrbitControls } from "@react-three/drei";
 import { Canvas } from "@react-three/fiber";
 import Dice from "../components/dice";
@@ -31,13 +32,18 @@ function Home() {
 					maxAzimuthAngle={Math.PI / 6}
 				/>
 
-				<Float>
-					<ambientLight intensity={0.2} />
+				{/* Keeps a suspending asset inside the canvas. Without it the nearest
+				    boundary is the route's, so one late model would tear down the whole
+				    Canvas and rebuild the WebGL context behind the intro. */}
+				<Suspense fallback={null}>
+					<Float>
+						<ambientLight intensity={0.2} />
 
-					<Dice />
-					<Model />
-					<Board />
-				</Float>
+						<Dice />
+						<Model />
+						<Board />
+					</Float>
+				</Suspense>
 			</Canvas>
 		</div>
 	);

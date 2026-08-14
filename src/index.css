@@ -1,4 +1,7 @@
-@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap");
+/* The Google Fonts stylesheet is linked from index.html, not imported here. An
+   @import is only discovered once this file has been fetched and parsed, which
+   put the font CSS and then the font file on the end of a three-request chain,
+   all of it blocking render. */
 
 @import "tailwindcss";
 

@@ -117,4 +117,3 @@ export function Dev(props: React.ComponentProps<"group">) {
 	);
 }
 
-useGLTF.preload("/models/dev.glb");

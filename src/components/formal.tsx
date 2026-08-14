@@ -121,4 +121,3 @@ export function Formal(props: JSX.IntrinsicElements["group"]) {
 	);
 }
 
-useGLTF.preload("/models/formal.glb");

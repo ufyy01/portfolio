@@ -4,7 +4,7 @@ import { useContext, useState } from "react";
 import * as THREE from "three";
 
 // Preload the board texture
-useTexture.preload("/textures/boardTop.png");
+useTexture.preload("/textures/boardTop.webp");
 
 const Board = () => {
 	const gameContext = useContext(GameContext);
@@ -12,7 +12,7 @@ const Board = () => {
 	const setLoadingTextures = gameContext?.setLoadingTextures;
 	const [texturesLoaded, setTexturesLoaded] = useState(false);
 
-	const boardTexture = useTexture("/textures/boardTop.png", () =>
+	const boardTexture = useTexture("/textures/boardTop.webp", () =>
 		setTexturesLoaded(true)
 	);
 

@@ -9,15 +9,15 @@ const MultipleClouds = () => {
 	const sky = useSkyTheme();
 	const reducedMotion = usePrefersReducedMotion();
 	const images = [
-		"/images/cloud1.png",
-		"/images/cloud2.png",
-		"/images/cloud3.png",
-		"/images/cloud4.png",
-		"/images/cloud5.png",
-		"/images/cloud6.png",
-		"/images/cloud7.png",
-		"/images/cloud4.png",
-		"/images/cloud1.png",
+		"/images/cloud1.webp",
+		"/images/cloud2.webp",
+		"/images/cloud3.webp",
+		"/images/cloud4.webp",
+		"/images/cloud5.webp",
+		"/images/cloud6.webp",
+		"/images/cloud7.webp",
+		"/images/cloud4.webp",
+		"/images/cloud1.webp",
 	];
 
 	useLayoutEffect(() => {

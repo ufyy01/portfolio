@@ -35,7 +35,7 @@ const GAMES = [
 		id: "wordShuffle",
 		icon: "🔤",
 		name: "Word Grid Shuffle",
-		blurb: "Eight words hidden in a letter grid.",
+		blurb: "Find a word, another takes its place. Beat the clock.",
 	},
 	{
 		id: "sudoku",

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useContext } from "react";
+import { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { GameContext } from "@/context/gameContext";
 import { drawerSheet } from "@/lib/drawerStyles";
 import GameShell, {
@@ -9,12 +9,20 @@ import GameShell, {
 
 const GRID_SIZE = 10;
 /**
- * A round hides a handful of words rather than the whole pool: the grid only has
- * room for so many, and the counter used to count up to a total that could never
- * be reached, so "found them all" never fired.
+ * How many words are hidden at once — the working set, not the whole round. Find
+ * one and it is replaced by the next word out of the pool, so the grid only ever
+ * shows eight but a round is as long as the clock and as deep as the pool.
  */
 const WORDS_PER_ROUND = 8;
-const ROUND_TIME = 90;
+// Same minute Flip the Card runs on. With words refilling as they are found the
+// round no longer has a natural end, so the clock is the whole shape of it — and
+// a long one just draws out a score that stopped climbing.
+const ROUND_TIME = 60;
+/**
+ * Long enough for the found word to read as found and fade out of the list
+ * before its replacement takes the slot. Matches the fade-out duration below.
+ */
+const REPLACE_DELAY = 600;
 
 const HIDDEN_WORDS = [
 	"node",
@@ -115,18 +123,33 @@ const HIDDEN_WORDS_OTHER = [
 	"bag",
 ];
 
-type Cell = {
-	letter: string;
-	row: number;
-	col: number;
-	found: boolean;
+/** One word hidden in the grid, and exactly which cells it occupies. */
+type Placement = {
+	id: number;
+	word: string;
+	cells: [number, number][];
 };
 
 type Round = {
-	grid: Cell[][];
-	/** The words actually placed in this grid — the ones worth hunting for. */
-	words: string[];
+	letters: string[][];
+	/** Hidden and still to be found. */
+	active: Placement[];
+	/** Found, still fading out of the list before its slot is refilled. */
+	retiring: Placement[];
+	/** Cells lit up as found, keyed "row,col". Cleared when the slot refills. */
+	lit: string[];
+	/** Every word this round has already used, so replacements never repeat. */
+	used: string[];
+	found: number;
+	nextId: number;
 };
+
+const cellKey = (row: number, col: number) => `${row},${col}`;
+
+const DIRECTIONS: [number, number][] = [
+	[0, 1], // right
+	[1, 0], // down
+];
 
 const generateRandomLetter = () =>
 	String.fromCharCode(65 + Math.floor(Math.random() * 26));
@@ -140,74 +163,91 @@ const shuffled = <T,>(items: T[]): T[] => {
 	return copy;
 };
 
-const createRound = (pool: string[]): Round => {
-	const emptyChar = "";
-	const grid: string[][] = Array(GRID_SIZE)
-		.fill(null)
-		.map(() => Array(GRID_SIZE).fill(emptyChar));
-
-	const directions = [
-		[0, 1], // right
-		[1, 0], // down
-	];
-
-	const placeWord = (word: string): boolean => {
-		const direction = directions[Math.floor(Math.random() * directions.length)];
-		const [dx, dy] = direction;
-
-		for (let attempt = 0; attempt < 100; attempt++) {
-			const startRow = Math.floor(Math.random() * GRID_SIZE);
-			const startCol = Math.floor(Math.random() * GRID_SIZE);
-
-			const endRow = startRow + dx * (word.length - 1);
-			const endCol = startCol + dy * (word.length - 1);
-
-			if (
-				endRow >= GRID_SIZE ||
-				endCol >= GRID_SIZE ||
-				endRow < 0 ||
-				endCol < 0
-			)
-				continue;
-
-			let fits = true;
-			for (let i = 0; i < word.length; i++) {
-				const r = startRow + i * dx;
-				const c = startCol + i * dy;
-				if (grid[r][c] !== emptyChar && grid[r][c] !== word[i].toUpperCase()) {
-					fits = false;
-					break;
-				}
-			}
-			if (!fits) continue;
-
-			for (let i = 0; i < word.length; i++) {
-				const r = startRow + i * dx;
-				const c = startCol + i * dy;
-				grid[r][c] = word[i].toUpperCase();
-			}
-			return true;
+/**
+ * The cells that are spoken for: every letter of every word still in play. A new
+ * word may cross one only where it already agrees. Everything else — filler, and
+ * the leftovers of words already found — is free to be written over.
+ */
+const lockedCells = (placements: Placement[], letters: string[][]) => {
+	const locked = new Map<string, string>();
+	for (const placement of placements) {
+		for (const [row, col] of placement.cells) {
+			locked.set(cellKey(row, col), letters[row][col]);
 		}
-		return false;
-	};
-
-	const words: string[] = [];
-	for (const word of shuffled(pool)) {
-		if (words.length >= WORDS_PER_ROUND) break;
-		if (word.length <= GRID_SIZE && placeWord(word)) words.push(word);
 	}
+	return locked;
+};
 
-	// Fill remaining cells
-	const finalGrid: Cell[][] = grid.map((row, rIdx) =>
-		row.map((char, cIdx) => ({
-			letter: char === emptyChar ? generateRandomLetter() : char,
-			row: rIdx,
-			col: cIdx,
-			found: false,
-		})),
+/**
+ * Hide `word` somewhere it fits, writing it into `letters` (mutated — pass a
+ * copy). Returns the cells it landed on, or null if there was no room for it.
+ */
+const hideWord = (
+	letters: string[][],
+	word: string,
+	locked: Map<string, string>,
+): [number, number][] | null => {
+	const upper = word.toUpperCase();
+
+	for (let attempt = 0; attempt < 200; attempt++) {
+		const [dRow, dCol] = DIRECTIONS[Math.floor(Math.random() * DIRECTIONS.length)];
+		const startRow = Math.floor(Math.random() * GRID_SIZE);
+		const startCol = Math.floor(Math.random() * GRID_SIZE);
+
+		if (
+			startRow + dRow * (upper.length - 1) >= GRID_SIZE ||
+			startCol + dCol * (upper.length - 1) >= GRID_SIZE
+		)
+			continue;
+
+		const cells: [number, number][] = [];
+		let fits = true;
+		for (let i = 0; i < upper.length; i++) {
+			const row = startRow + i * dRow;
+			const col = startCol + i * dCol;
+			const taken = locked.get(cellKey(row, col));
+			if (taken !== undefined && taken !== upper[i]) {
+				fits = false;
+				break;
+			}
+			cells.push([row, col]);
+		}
+		if (!fits) continue;
+
+		cells.forEach(([row, col], i) => {
+			letters[row][col] = upper[i];
+		});
+		return cells;
+	}
+	return null;
+};
+
+const createRound = (pool: string[]): Round => {
+	const letters: string[][] = Array.from({ length: GRID_SIZE }, () =>
+		Array.from({ length: GRID_SIZE }, () => ""),
 	);
 
-	return { grid: finalGrid, words };
+	const active: Placement[] = [];
+	const used: string[] = [];
+	let nextId = 0;
+
+	for (const word of shuffled(pool)) {
+		if (active.length >= WORDS_PER_ROUND) break;
+		if (word.length > GRID_SIZE) continue;
+		const cells = hideWord(letters, word, lockedCells(active, letters));
+		if (cells) {
+			active.push({ id: nextId++, word, cells });
+			used.push(word);
+		}
+	}
+
+	for (let row = 0; row < GRID_SIZE; row++) {
+		for (let col = 0; col < GRID_SIZE; col++) {
+			if (letters[row][col] === "") letters[row][col] = generateRandomLetter();
+		}
+	}
+
+	return { letters, active, retiring: [], lit: [], used, found: 0, nextId };
 };
 
 // Fills in any skipped cells between the last selected cell and the current hover/touch cell
@@ -260,21 +300,88 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 
 	const [round, setRound] = useState<Round>(() => createRound(pool));
 	const [selectedPath, setSelectedPath] = useState<[number, number][]>([]);
-	const [foundWords, setFoundWords] = useState<string[]>([]);
 	const [isMouseDown, setIsMouseDown] = useState(false);
 
 	const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
 	const [gameOver, setGameOver] = useState(false);
 	const gridRef = useRef<HTMLDivElement | null>(null);
+	/** Pending refills, so a restart or an unmount cannot land one afterwards. */
+	const refillTimers = useRef<number[]>([]);
 
-	const { grid, words } = round;
+	const { letters, active, retiring, lit, found } = round;
+	const litCells = useMemo(() => new Set(lit), [lit]);
+
+	const clearRefills = () => {
+		refillTimers.current.forEach(clearTimeout);
+		refillTimers.current = [];
+	};
+
+	useEffect(() => clearRefills, []);
 
 	const resetGame = () => {
+		clearRefills();
 		setRound(createRound(pool));
 		setSelectedPath([]);
-		setFoundWords([]);
 		setTimeLeft(ROUND_TIME);
 		setGameOver(false);
+	};
+
+	/**
+	 * Take the found word out of play, light its letters up, then — once it has
+	 * had time to fade out of the list — scramble the cells it no longer needs and
+	 * hide the next word from the pool in its place.
+	 */
+	const retire = (placement: Placement) => {
+		setRound((prev) => ({
+			...prev,
+			active: prev.active.filter((p) => p.id !== placement.id),
+			retiring: [...prev.retiring, placement],
+			lit: [...prev.lit, ...placement.cells.map(([r, c]) => cellKey(r, c))],
+			found: prev.found + 1,
+		}));
+
+		const timer = window.setTimeout(() => {
+			setRound((prev) => {
+				const freed = new Set(
+					placement.cells.map(([r, c]) => cellKey(r, c)),
+				);
+				const base = {
+					...prev,
+					retiring: prev.retiring.filter((p) => p.id !== placement.id),
+					lit: prev.lit.filter((key) => !freed.has(key)),
+				};
+
+				const next = pool.find(
+					(word) => !prev.used.includes(word) && word.length <= GRID_SIZE,
+				);
+				if (!next) return base;
+
+				const letters = prev.letters.map((row) => [...row]);
+				const locked = lockedCells(prev.active, letters);
+
+				// The word that just left would otherwise stay legible in the grid,
+				// findable but no longer listed.
+				for (const [row, col] of placement.cells) {
+					if (!locked.has(cellKey(row, col)))
+						letters[row][col] = generateRandomLetter();
+				}
+
+				const cells = hideWord(letters, next, locked);
+				if (!cells) return base;
+
+				const taken = new Set(cells.map(([r, c]) => cellKey(r, c)));
+				return {
+					...base,
+					letters,
+					lit: base.lit.filter((key) => !taken.has(key)),
+					active: [...prev.active, { id: prev.nextId, word: next, cells }],
+					nextId: prev.nextId + 1,
+					used: [...prev.used, next],
+				};
+			});
+		}, REPLACE_DELAY);
+
+		refillTimers.current.push(timer);
 	};
 
 	useEffect(() => {
@@ -309,31 +416,18 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 		if (gameOver) return;
 		setIsMouseDown(false);
 
-		const letters = selectedPath.map(([r, c]) => grid[r][c].letter).join("");
+		const spelled = selectedPath.map(([r, c]) => letters[r][c]).join("");
 		// Dragging right-to-left or bottom-to-top spells the word backwards; that's
 		// still the word, so both readings count.
 		const candidates = [
-			letters.toLowerCase(),
-			[...letters].reverse().join("").toLowerCase(),
+			spelled.toLowerCase(),
+			[...spelled].reverse().join("").toLowerCase(),
 		];
-		const match = candidates.find(
-			(word) => words.includes(word) && !foundWords.includes(word),
+		const match = active.find((placement) =>
+			candidates.includes(placement.word),
 		);
 
-		if (match) {
-			setFoundWords([...foundWords, match]);
-			// Mark each selected cell as found
-			setRound((prev) => ({
-				...prev,
-				grid: prev.grid.map((row) =>
-					row.map((cell) =>
-						selectedPath.some(([r, c]) => r === cell.row && c === cell.col)
-							? { ...cell, found: true }
-							: cell,
-					),
-				),
-			}));
-		}
+		if (match) retire(match);
 
 		setSelectedPath([]);
 	};
@@ -353,13 +447,13 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [isMouseDown]);
 
-	useEffect(() => {
-		if (words.length > 0 && foundWords.length === words.length) {
-			setGameOver(true);
-		}
-	}, [foundWords, words]);
+	// The clock is the usual finish. Running the pool dry is the rare one, and the
+	// only way to actually clear the board.
+	const cleared = active.length === 0 && retiring.length === 0 && found > 0;
 
-	const allFound = words.length > 0 && foundWords.length === words.length;
+	useEffect(() => {
+		if (cleared) setGameOver(true);
+	}, [cleared]);
 
 	return (
 		// Its own panel rather than the drawer's: the grid needs raw pointer events,
@@ -369,52 +463,62 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 				className={`${drawerSheet} flex h-full max-h-[92svh] w-full max-w-3xl flex-col p-4`}>
 				<GameShell
 					title="Word Shuffle"
-					hint="Hold and drag across letters, then release."
+					hint="Hold and drag across letters, then release. Every word you find is replaced by a new one."
 					onRestart={resetGame}
 					onBack={() => setGame(null)}
 					status={
 						<>
 							<span
 								className={`${gameChip} ${
-									timeLeft <= 15
+									// Last sixth, then the back half — kept as fractions of the
+									// round so they still mean something if it is retuned.
+									timeLeft <= ROUND_TIME / 6
 										? "bg-red-500"
-										: timeLeft <= 45
+										: timeLeft <= ROUND_TIME / 2
 											? "bg-yellow-500"
 											: "bg-emerald-600"
 								}`}>
 								⏱ {timeLeft}s
 							</span>
 							<span className={`${gameChip} bg-slate-700`}>
-								Found: {foundWords.length}/{words.length}
+								Found: {found}
 							</span>
 						</>
 					}
 					footer={
 						<div className="flex flex-wrap items-center justify-center gap-1.5">
-							{words.map((word) => {
-								const found = foundWords.includes(word);
-								return (
-									<span
-										key={word}
-										className={`rounded-full border px-3 py-1 text-sm font-semibold uppercase tracking-wide transition ${
-											found
-												? "border-emerald-600/30 bg-emerald-100 text-emerald-700 line-through"
-												: "border-[#fc045c]/20 bg-white text-slate-700"
-										}`}>
-										{word}
-									</span>
-								);
-							})}
+							{[...active, ...retiring]
+								// By id, so a word holds its place in the list and replacements
+								// arrive at the end instead of reshuffling the whole row.
+								.sort((a, b) => a.id - b.id)
+								.map((placement) => {
+									const isRetiring = retiring.some(
+										(p) => p.id === placement.id,
+									);
+									return (
+										<span
+											key={placement.id}
+											className={`rounded-full border px-3 py-1 text-sm font-semibold uppercase tracking-wide ${
+												isRetiring
+													? "animate-out fade-out-0 zoom-out-95 fill-mode-forwards duration-500 border-emerald-600/30 bg-emerald-100 text-emerald-700 line-through"
+													: "animate-in fade-in-0 zoom-in-95 duration-300 border-[#fc045c]/20 bg-white text-slate-700"
+											}`}>
+											{placement.word}
+										</span>
+									);
+								})}
 						</div>
 					}
 					overlay={
 						gameOver ? (
 							<GameOverCard
-								won={allFound}
+								won={cleared}
 								message={
-									allFound
-										? `Amazing work — all ${words.length} words with ${timeLeft}s to spare!`
-										: `You found ${foundWords.length} of ${words.length}. Try again and beat the clock.`
+									cleared
+										? `Amazing work — you cleared the whole pool with ${timeLeft}s to spare!`
+										: `You found ${found} ${
+												found === 1 ? "word" : "words"
+											}. Try again and beat your score.`
 								}
 								onRestart={resetGame}
 								onBack={() => setGame(null)}
@@ -480,16 +584,17 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 
 							setSelectedPath((prev) => extendPathStraight(prev, row, col));
 						}}>
-						{grid.map((row) =>
-							row.map((cell) => {
+						{letters.map((row, rowIdx) =>
+							row.map((letter, colIdx) => {
 								const isSelected = selectedPath.some(
-									([r, c]) => r === cell.row && c === cell.col,
+									([r, c]) => r === rowIdx && c === colIdx,
 								);
+								const isFound = litCells.has(cellKey(rowIdx, colIdx));
 								return (
 									<div
-										key={`${cell.row}-${cell.col}`}
-										className={`flex cursor-pointer select-none items-center justify-center rounded border font-bold leading-none text-[clamp(0.65rem,5cqmin,1.5rem)] ${
-											cell.found
+										key={`${rowIdx}-${colIdx}`}
+										className={`flex cursor-pointer select-none items-center justify-center rounded border font-bold leading-none transition-colors text-[clamp(0.65rem,5cqmin,1.5rem)] ${
+											isFound
 												? "border-emerald-600/30 bg-emerald-300 text-white"
 												: isSelected
 													? "border-blue-300 bg-blue-200"
@@ -498,11 +603,11 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 										onMouseDown={(e) => {
 											e.preventDefault();
 											e.stopPropagation();
-											handleMouseDown(cell.row, cell.col);
+											handleMouseDown(rowIdx, colIdx);
 										}}
-										onMouseEnter={() => handleMouseEnter(cell.row, cell.col)}
-										onTouchStart={() => handleMouseDown(cell.row, cell.col)}>
-										{cell.letter}
+										onMouseEnter={() => handleMouseEnter(rowIdx, colIdx)}
+										onTouchStart={() => handleMouseDown(rowIdx, colIdx)}>
+										{letter}
 									</div>
 								);
 							}),

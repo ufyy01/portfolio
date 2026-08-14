@@ -1,7 +1,14 @@
 // --- External libraries ---
 import * as THREE from "three";
 import gsap from "gsap";
-import { useContext, useEffect, useRef, useState, useMemo } from "react";
+import {
+	useContext,
+	useEffect,
+	useRef,
+	useState,
+	useMemo,
+	Suspense,
+} from "react";
 
 // --- Drei / R3F ---
 import { useFrame, useThree } from "@react-three/fiber";
@@ -17,6 +24,7 @@ import {
 import { Formal } from "./formal";
 import { Dev } from "./dev";
 import { Casual } from "./Casual";
+import ExtraAnimations from "./extraAnimations";
 
 // --- Context ---
 import { GameContext } from "@/context/gameContext";
@@ -77,43 +85,25 @@ const Model = () => {
 	const [animation, setAnimation] = useState("Idle");
 
 	// --- Animation loading & renaming ---
+	// Only the two the character needs the moment it appears. The other seven are
+	// fetched by ExtraAnimations once the board is up — see the note in that file.
 	const { animations: idleAnimation } = useFBX("/animations/Idle.fbx");
 	const { animations: walkAnimation } = useFBX("/animations/Walkk.fbx");
-	const { animations: jumpAnimation } = useFBX("/animations/Joyful Jump.fbx");
-	const { animations: defeatedAnimation } = useFBX("/animations/Defeated.fbx");
-	const { animations: danceAnimation } = useFBX(
-		"/animations/Arms Hip Hop Dance.fbx"
-	);
-	const { animations: cheeringAnimation } = useFBX("/animations/Cheering.fbx");
-	const { animations: waveAnimation } = useFBX("/animations/Waving.fbx");
-	const { animations: headsetAnimation } = useFBX("/animations/headset.fbx");
-	const { animations: gameAnimation } = useFBX("/animations/game.fbx");
 
 	idleAnimation[0].name = "Idle";
 	walkAnimation[0].name = "Walk";
-	jumpAnimation[0].name = "Jump";
-	defeatedAnimation[0].name = "Defeated";
-	danceAnimation[0].name = "Dance";
-	cheeringAnimation[0].name = "Cheering";
-	waveAnimation[0].name = "Wave";
-	headsetAnimation[0].name = "Headset";
-	gameAnimation[0].name = "Game";
+
+	const [extraClips, setExtraClips] = useState<THREE.AnimationClip[]>([]);
 
 	// --- useAnimations ---
-	const { actions } = useAnimations(
-		[
-			idleAnimation[0],
-			walkAnimation[0],
-			jumpAnimation[0],
-			defeatedAnimation[0],
-			danceAnimation[0],
-			cheeringAnimation[0],
-			waveAnimation[0],
-			headsetAnimation[0],
-			gameAnimation[0],
-		],
-		meshRef
+	// Grows once, when the deferred clips land. useAnimations rebuilds its actions
+	// on a new list, and the crossfade effect below re-runs with it.
+	const clips = useMemo(
+		() => [idleAnimation[0], walkAnimation[0], ...extraClips],
+		[idleAnimation, walkAnimation, extraClips]
 	);
+
+	const { actions } = useAnimations(clips, meshRef);
 
 	// --- Wave cycle: trigger wave after 5s of inactivity, then idle, repeat as long as not moving ---
 	useEffect(() => {
@@ -397,10 +387,15 @@ const Model = () => {
 	}, [boardPosition, setBoardName, setIsWalking, camera]);
 
 	// --- Animation: ensure no walking plays on initial load ---
+	// Once, not on every actions change: the list grows when the deferred clips
+	// land, and re-running this then would stop a walk already under way.
+	const stoppedInitialWalk = useRef(false);
 	useEffect(() => {
+		if (stoppedInitialWalk.current) return;
 		const walkAction = actions["Walk"];
 		if (walkAction) {
 			walkAction.stop();
+			stoppedInitialWalk.current = true;
 		}
 	}, [actions]);
 
@@ -871,6 +866,11 @@ const Model = () => {
 			{/* <Environment files={sunsetUrl} /> */}
 			<ambientLight intensity={2.5} />
 			<pointLight position={[3, 5, 5]} intensity={1} />
+			{/* Its own boundary: while these are in flight the character is already
+			    standing on the board, idling, and must not be suspended with them. */}
+			<Suspense fallback={null}>
+				<ExtraAnimations onLoaded={setExtraClips} />
+			</Suspense>
 			{visitorType === "recruiter" && (
 				<Formal
 					ref={meshRef}
@@ -901,12 +901,8 @@ const Model = () => {
 
 export default Model;
 
+// Only these two are warmed ahead of the click. Preloading all nine here is what
+// put 10.3MB in front of the intro's "explore" button, since useProgress counts
+// every one of them and the button waits on it reaching 100.
 useFBX.preload("/animations/Idle.fbx");
 useFBX.preload("/animations/Walkk.fbx");
-useFBX.preload("/animations/Joyful Jump.fbx");
-useFBX.preload("/animations/Defeated.fbx");
-useFBX.preload("/animations/Arms Hip Hop Dance.fbx");
-useFBX.preload("/animations/Cheering.fbx");
-useFBX.preload("/animations/Waving.fbx");
-useFBX.preload("/animations/headset.fbx");
-useFBX.preload("/animations/game.fbx");
