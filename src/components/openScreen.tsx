@@ -3,6 +3,7 @@ import {
 	useEffect,
 	useLayoutEffect,
 	useRef,
+	useState,
 	useMemo,
 	useCallback,
 } from "react";
@@ -15,6 +16,14 @@ import StarField from "./starField";
 import { useIsLowEndAndroid, useSkyTheme } from "@/lib/sky";
 import { usePrefersReducedMotion } from "@/lib/useMoble";
 import { useOverflowHint } from "@/lib/useOverflowHint";
+import { BOARD_ROUTES, type BoardRoute } from "@/lib/boardRoutes";
+import {
+	describeLastVisit,
+	milestoneFor,
+	type VisitorMemory,
+} from "@/lib/visitorMemory";
+import Confetti from "./confetti";
+import { sfx } from "@/lib/sfx";
 
 type VisitorType = "recruiter" | "developer" | "other";
 
@@ -49,6 +58,13 @@ interface OpenScreenProps {
 	setPlaying: (playing: boolean) => void;
 	/** Called once the intro has fully faded out, so it can be unmounted. */
 	onExited?: () => void;
+	/** Set when this browser has reached the board before. */
+	returning?: VisitorMemory | null;
+	/**
+	 * Enter straight onto a tile rather than at Start. Runs before the scene is
+	 * mounted, so the figure is placed there instead of walking over.
+	 */
+	onJumpTo?: (route: BoardRoute) => void;
 }
 
 /**
@@ -84,7 +100,13 @@ function whenFramesAreCheap(run: () => void) {
 	return () => cancelAnimationFrame(frame);
 }
 
-const OpenScreen = ({ progress, setPlaying, onExited }: OpenScreenProps) => {
+const OpenScreen = ({
+	progress,
+	setPlaying,
+	onExited,
+	returning,
+	onJumpTo,
+}: OpenScreenProps) => {
 	const gameContext = useContext(GameContext);
 	const loadingTextures = gameContext?.loadingTextures;
 
@@ -130,6 +152,32 @@ const OpenScreen = ({ progress, setPlaying, onExited }: OpenScreenProps) => {
 
 	const isLoading = Boolean(loadingTextures) && progress < 100;
 	const pct = Math.min(100, Math.round(progress));
+
+	const lastVisitLabel = useMemo(
+		() => (returning ? describeLastVisit(returning.lastVisit) : null),
+		[returning],
+	);
+
+	// Stored visits are the finished ones, so the visit starting now is the next
+	// number up.
+	const milestone = useMemo(
+		() => (returning ? milestoneFor(returning.visits + 1) : null),
+		[returning],
+	);
+
+	const [celebrating, setCelebrating] = useState(false);
+
+	// Held until the card has finished arriving — thrown across its own entrance
+	// the confetti reads as a rendering fault rather than a welcome. Skipped
+	// outright on the lite path, which is where reduced-motion lands.
+	useEffect(() => {
+		if (!milestone || lite) return;
+		const timer = window.setTimeout(() => {
+			setCelebrating(true);
+			sfx.play("burst");
+		}, 1500);
+		return () => window.clearTimeout(timer);
+	}, [milestone, lite]);
 
 	const { ref: scrollRef, hasMore: showScrollHint } =
 		useOverflowHint<HTMLDivElement>(isLoading);
@@ -215,11 +263,16 @@ const OpenScreen = ({ progress, setPlaying, onExited }: OpenScreenProps) => {
 
 
 	/** Exit: dice rolls, card lifts away, clouds part, the sky hands over to the scene. */
-	const handleEnter = useCallback(() => {
-		if (exitingRef.current) return;
-		exitingRef.current = true;
+	const handleEnter = useCallback(
+		(jumpTo?: BoardRoute) => {
+			if (exitingRef.current) return;
+			exitingRef.current = true;
 
-		floatRef.current?.kill();
+			// Before setPlaying below, so the tile is already chosen by the time the
+			// scene mounts and the figure is placed there rather than walking over.
+			if (jumpTo) onJumpTo?.(jumpTo);
+
+			floatRef.current?.kill();
 
 		if (lite) {
 			setPlaying(true);
@@ -320,7 +373,9 @@ const OpenScreen = ({ progress, setPlaying, onExited }: OpenScreenProps) => {
 				Math.max(0, spin.duration() - spin.time() - 0.2),
 			);
 		});
-	}, [lite, onExited, setPlaying]);
+		},
+		[lite, onExited, setPlaying, onJumpTo],
+	);
 
 	// The exit outlives the context that owns the entrance, so it cleans up here.
 	useEffect(
@@ -395,28 +450,78 @@ const OpenScreen = ({ progress, setPlaying, onExited }: OpenScreenProps) => {
 				<div className="relative flex max-h-[86vh] flex-col">
 					<div className="px-6 pt-7 md:px-8">
 						<p className="intro-item inline-flex items-center gap-2 rounded-full bg-white/25 px-3 py-1 text-xs uppercase tracking-[0.18em] text-white">
-							Welcome,
+							{returning ? "Welcome back," : "Welcome,"}
 						</p>
 						<h1 className="intro-item mt-3 font-fraunces text-4xl italic leading-tight text-white drop-shadow-sm md:text-5xl">
-							Hi, I'm Ufuoma.
-							<br />
-							<span className="text-white/90">Can I know you?</span>
+							{returning ? (
+								<>
+									Good to see you again.
+									<br />
+									<span className="text-white/90">Where to this time?</span>
+								</>
+							) : (
+								<>
+									Hi, I'm Ufuoma.
+									<br />
+									<span className="text-white/90">Can I know you?</span>
+								</>
+							)}
 						</h1>
 					</div>
 
 					<div
 						ref={scrollRef}
 						className="no-scrollbar min-h-0 flex-1 space-y-4 overflow-y-auto px-6 pb-2 pt-4 md:px-8">
-						<p className="intro-item text-[0.95rem] leading-relaxed text-white/90">
-							I'm a software developer with a soft spot for storytelling,
-							interactivity and joyful user experiences. I don't just build
-							projects... I build experiences that resonate, connect and
-							inspire.
-						</p>
-						<p className="intro-item text-[0.95rem] leading-relaxed text-white/90">
-							Thank you for visiting my little corner of the internet. I'd love
-							to look my best for you, so pick the option that fits you 👇🏾
-						</p>
+						{returning ? (
+							<>
+								<p className="intro-item text-[0.95rem] leading-relaxed text-white/90">
+									{lastVisitLabel
+										? `You were here ${lastVisitLabel} — thank you for coming back.`
+										: "Thank you for coming back."}{" "}
+									Roll for the scenic route, or skip straight to what you came
+									for.
+								</p>
+
+								{milestone && (
+									<p className="intro-item flex items-start gap-2 rounded-2xl border border-white/40 bg-white/20 px-4 py-3 text-[0.95rem] font-semibold leading-relaxed text-white">
+										<span aria-hidden="true">🎉</span>
+										<span>{milestone}</span>
+									</p>
+								)}
+
+								<div className="intro-item">
+									<p className="mb-2 text-xs uppercase tracking-[0.14em] text-white/70">
+										Jump to
+									</p>
+									<div className="flex flex-wrap gap-2">
+										{BOARD_ROUTES.map((route) => (
+											<button
+												key={route.path}
+												type="button"
+												onClick={() => handleEnter(route)}
+												disabled={isLoading}
+												className="rounded-full border border-white/40 bg-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-white/70 hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0">
+												{route.label}
+											</button>
+										))}
+									</div>
+								</div>
+							</>
+						) : (
+							<>
+								<p className="intro-item text-[0.95rem] leading-relaxed text-white/90">
+									I'm a software developer with a soft spot for storytelling,
+									interactivity and joyful user experiences. I don't just build
+									projects... I build experiences that resonate, connect and
+									inspire.
+								</p>
+								<p className="intro-item text-[0.95rem] leading-relaxed text-white/90">
+									Thank you for visiting my little corner of the internet. I'd
+									love to look my best for you, so pick the option that fits you
+									👇🏾
+								</p>
+							</>
+						)}
 
 						<div
 							role="radiogroup"
@@ -485,7 +590,9 @@ const OpenScreen = ({ progress, setPlaying, onExited }: OpenScreenProps) => {
 						<Button
 							size="lg"
 							className="intro-item h-auto w-full rounded-full bg-white py-3 text-[#fc045c] shadow-lg transition-transform hover:bg-white hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
-							onClick={handleEnter}
+							// Wrapped, not passed directly: onClick hands the button its click
+							// event, which would arrive as the jump destination.
+							onClick={() => handleEnter()}
 							disabled={isLoading}>
 							<span ref={diceRef} className="inline-flex">
 								<Icon
@@ -519,6 +626,15 @@ const OpenScreen = ({ progress, setPlaying, onExited }: OpenScreenProps) => {
 					</div>
 				</div>
 			</div>
+
+			{/* Over the card, and outside it: the card clips its own overflow, which
+			    would cut every piece off at its edges. */}
+			{celebrating && (
+				<Confetti
+					count={isLowEndAndroid ? 55 : 120}
+					onDone={() => setCelebrating(false)}
+				/>
+			)}
 
 			<div
 				ref={continuousRef}

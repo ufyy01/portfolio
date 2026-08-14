@@ -1,7 +1,8 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import { ArrowLeft, RotateCcw } from "lucide-react";
 import { Button } from "./ui/button";
 import { drawerHeading } from "@/lib/drawerStyles";
+import { sfx } from "@/lib/sfx";
 
 /**
  * One stage for all three mini-games.
@@ -120,8 +121,14 @@ export const GameOverCard = ({
 	message,
 	onRestart,
 	onBack,
-}: GameOverCardProps) => (
-	<div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-slate-900/50 p-4 backdrop-blur-sm">
+}: GameOverCardProps) => {
+	// Every game ends through this card, so the flourish only needs wiring once.
+	useEffect(() => {
+		sfx.play(won ? "win" : "lose");
+	}, [won]);
+
+	return (
+		<div className="absolute inset-0 z-20 flex items-center justify-center rounded-lg bg-slate-900/50 p-4 backdrop-blur-sm">
 		<div className="w-full max-w-md rounded-2xl bg-white p-6 text-center shadow-xl">
 			<div className="text-5xl">{won ? "🎉" : "⏰"}</div>
 			<h3 className={`${drawerHeading} mt-2 text-2xl`}>
@@ -140,10 +147,11 @@ export const GameOverCard = ({
 					onClick={onBack}
 					className="border border-orange-700/20 bg-white font-fraunces text-lg italic text-orange-700 hover:bg-orange-50">
 					Back to games
-				</Button>
+					</Button>
+				</div>
 			</div>
 		</div>
-	</div>
-);
+	);
+};
 
 export default GameShell;

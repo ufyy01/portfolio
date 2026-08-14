@@ -6,6 +6,7 @@ import GameShell, {
 	gameBoardSquare,
 	gameChip,
 } from "./gameShell";
+import { sfx } from "@/lib/sfx";
 
 const GRID_SIZE = 10;
 /**
@@ -332,6 +333,7 @@ const WordShuffle = ({ setGame }: WordShuffleProps) => {
 	 * hide the next word from the pool in its place.
 	 */
 	const retire = (placement: Placement) => {
+		sfx.play("found");
 		setRound((prev) => ({
 			...prev,
 			active: prev.active.filter((p) => p.id !== placement.id),

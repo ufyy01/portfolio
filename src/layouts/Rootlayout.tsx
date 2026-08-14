@@ -1,6 +1,14 @@
 import React from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { lazy, Suspense, useEffect, useState } from "react";
+import {
+	lazy,
+	Suspense,
+	useCallback,
+	useEffect,
+	useLayoutEffect,
+	useRef,
+	useState,
+} from "react";
 import OpenScreen from "@/components/openScreen";
 import { useIsLowEndAndroid, useSkyTheme } from "@/lib/sky";
 import { POPUP_BOARDS } from "@/lib/popupMessages";
@@ -9,6 +17,9 @@ import { GameContext } from "@/context/gameContext";
 import { useContext } from "react";
 import Seo from "@/components/Seo";
 import { useAmbientAudio } from "@/lib/useAmbientAudio";
+import { sfx } from "@/lib/sfx";
+import { routeForPath, type BoardRoute } from "@/lib/boardRoutes";
+import { readVisitor, rememberVisit } from "@/lib/visitorMemory";
 
 // The HUD, the popups and the five board panels are all post-click. Importing
 // them here put Radix, vaul and their dependencies in the entry bundle, where
@@ -93,15 +104,53 @@ const RootLayout = () => {
 	const boardPosition = gameContext?.boardPosition;
 	const playing = gameContext?.playing || false;
 	const setPlaying = gameContext?.setPlaying || (() => {});
+	const setBoardPosition = gameContext?.setBoardPosition;
+	const setBoardName = gameContext?.setBoardName;
 	const visitorType = gameContext?.visitorType;
+	const sceneReady = gameContext?.sceneReady || false;
 
-	// Kept mounted through its own exit animation, so the scene can fade in behind it
-	const [showIntro, setShowIntro] = useState(!playing);
+	const location = useLocation();
+	// Only ever the path the visit *started* on. Reading it live would yank the
+	// character back to the tile whenever the address changed for another reason.
+	const [entryRoute] = useState(() => routeForPath(window.location.pathname));
+
+	// Read once, before anything can write to it — otherwise recording this visit
+	// would immediately turn a first-time visitor into a returning one.
+	const [returning] = useState(() => readVisitor());
+	const setVisitorType = gameContext?.setVisitorType;
+
+	// Kept mounted through its own exit animation, so the scene can fade in behind it.
+	// A deep link skips it: someone who followed a link to the resume has already
+	// said what they came for, and the persona question is only in their way.
+	const [showIntro, setShowIntro] = useState(!playing && !entryRoute);
 
 	const { progress } = useProgress();
+	// A scene that never paints — no WebGL, a lost context — must not leave the
+	// visitor stuck behind the veil looking at a finished progress bar.
+	const [settleExpired, setSettleExpired] = useState(false);
+	useEffect(() => {
+		if (!entryRoute) return;
+		const timer = window.setTimeout(() => setSettleExpired(true), 10000);
+		return () => window.clearTimeout(timer);
+	}, [entryRoute]);
+
+	// Held until the scene reports a painted frame, not until the loader reports
+	// 100. Those are different moments, and on a warm cache the gap between them
+	// is long enough to show the tile's popup floating over an empty sky.
+	const settling = Boolean(entryRoute) && !sceneReady && !settleExpired;
 
 	const isLowEndAndroid = useIsLowEndAndroid();
 	const sky = useSkyTheme();
+
+	// Before the scene mounts, so Model's first render already sees the tile and
+	// places the character on it outright instead of walking there from start.
+	useLayoutEffect(() => {
+		if (!entryRoute) return;
+		setBoardPosition?.(entryRoute.position);
+		setBoardName?.(entryRoute.boardName);
+		setPlaying(true);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	// Keyed on the tile landed on, not just its name: two different tiles can share a
 	// name (and you can land on the same one twice), and a name-only dependency
@@ -112,7 +161,36 @@ const RootLayout = () => {
 		}
 	}, [boardName, boardPosition, setShowCloudPopup]);
 
-	const location = useLocation();
+	// One toggle for the whole soundtrack: the ambient bed and the board's effects.
+	useEffect(() => {
+		sfx.setMuted(muted);
+	}, [muted]);
+
+	// Answer the persona question on their behalf if they answered it last time.
+	useEffect(() => {
+		if (returning?.visitorType) setVisitorType?.(returning.visitorType);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
+
+	// Reaching the board is what counts as a visit — opening the page and leaving
+	// during the intro is not something worth greeting anyone for next time.
+	const recorded = useRef(false);
+	useEffect(() => {
+		if (!playing || recorded.current) return;
+		recorded.current = true;
+		rememberVisit(visitorType ?? null);
+	}, [playing, visitorType]);
+
+	/** A returning visitor picking a section from the intro's jump menu. */
+	const handleJumpTo = useCallback(
+		(route: BoardRoute) => {
+			setBoardPosition?.(route.position);
+			setBoardName?.(route.boardName);
+			// Keep the address honest about where they actually are.
+			window.history.replaceState(null, "", `/${route.path}`);
+		},
+		[setBoardPosition, setBoardName],
+	);
 
 	// The intro's button is gated on useProgress, and progress only moves once the
 	// scene's module-scope texture preloads have run. Those used to run at import
@@ -164,7 +242,33 @@ const RootLayout = () => {
 							progress={progress}
 							setPlaying={setPlaying}
 							onExited={() => setShowIntro(false)}
+							returning={returning}
+							onJumpTo={handleJumpTo}
 						/>
+					)}
+
+					{/* A deep link skips the intro, and with it the only thing that was
+					    covering the empty sky while the board loads. */}
+					{settling && (
+						<div
+							className={`fixed inset-0 z-[7000] flex flex-col items-center justify-center gap-4 ${sky.sky}`}
+							style={
+								isLowEndAndroid
+									? { backgroundColor: sky.fallback }
+									: undefined
+							}
+							role="status"
+							aria-live="polite">
+							<p className="font-fraunces text-2xl italic text-white drop-shadow-sm md:text-3xl">
+								Setting up the board…
+							</p>
+							<div className="h-1.5 w-48 overflow-hidden rounded-full bg-white/25">
+								<div
+									className="h-full rounded-full bg-white transition-[width] duration-300 ease-out"
+									style={{ width: `${Math.min(100, Math.round(progress))}%` }}
+								/>
+							</div>
+						</div>
 					)}
 					{playing && <Outlet />}
 					{playing && (

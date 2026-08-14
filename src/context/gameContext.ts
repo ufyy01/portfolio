@@ -27,4 +27,7 @@ export const GameContext = createContext<{
 	setDiceMoreThanEnd: (moreThanEnd: boolean) => void;
 	showMore: boolean;
 	setShowMore: (show: boolean) => void;
+	/** The 3D scene has rendered a frame — not merely finished loading. */
+	sceneReady: boolean;
+	setSceneReady: (ready: boolean) => void;
 } | null>(null);

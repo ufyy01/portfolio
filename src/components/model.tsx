@@ -28,6 +28,7 @@ import ExtraAnimations from "./extraAnimations";
 
 // --- Context ---
 import { GameContext } from "@/context/gameContext";
+import { sfx } from "@/lib/sfx";
 
 //preloading drei environment
 // useEnvironment.preload({ files: sunsetUrl });
@@ -260,6 +261,12 @@ const Model = () => {
 			if (!mountedRef.current) {
 				const { position } = meshPosition(boardPosition);
 				targetPos.current.set(position.x, position.y, position.z);
+				// Stand there, rather than only aiming there. The figure is mounted at
+				// the start tile, so a deep link that opens on Skills used to set the
+				// destination and leave her standing on Start. Nothing is on screen yet
+				// at this point, so there is no jump to see.
+				meshRef.current!.position.set(position.x, position.y, position.z);
+				lastBoardPositionRef.current = boardPosition;
 				// Set initial rotation for first move
 				if ([1, 2, 3].includes(boardPosition)) {
 					meshRef.current!.rotation.y = Math.PI / 2;
@@ -567,6 +574,9 @@ const Model = () => {
 			// Final arrival: stop movement and walk animation
 			isMovingRef.current = false;
 			hasArrivedRef.current = true;
+			// Here rather than in triggerArrival, which also fires for each tile
+			// stepped through on the way — this is the one that means "landed".
+			sfx.play("land");
 			setIsWalking?.(false);
 			const walkAction = actions["Walk"];
 			if (walkAction) walkAction.stop();

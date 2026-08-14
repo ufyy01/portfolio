@@ -4,6 +4,7 @@ import { Canvas } from "@react-three/fiber";
 import Dice from "../components/dice";
 import Model from "../components/model";
 import Board from "../components/board";
+import SceneReady from "../components/sceneReady";
 
 import { useIsMobile } from "@/lib/useMoble";
 function Home() {
@@ -43,6 +44,9 @@ function Home() {
 						<Model />
 						<Board />
 					</Float>
+					{/* Inside the boundary on purpose: it should only report a frame
+					    once the board and figure are in it, not while they suspend. */}
+					<SceneReady />
 				</Suspense>
 			</Canvas>
 		</div>

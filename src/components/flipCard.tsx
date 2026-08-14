@@ -4,6 +4,7 @@ import GameShell, {
 	gameBoardSquare,
 	gameChip,
 } from "./gameShell";
+import { sfx } from "@/lib/sfx";
 
 // Simple emoji icons for pairs (no external deps)
 const ICONS = [
@@ -150,6 +151,7 @@ const FlipCard: React.FC<FlipCardProps> = ({ setGame }) => {
 			// Let the flip animation play a bit before resolving
 			setTimeout(() => {
 				if (isMatch) {
+					sfx.play("found");
 					// Fade out via matched flag; keep flipped true for smoother fade
 					matchCards(first.id, second.id);
 				} else {

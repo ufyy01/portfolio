@@ -4,6 +4,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { GameContext } from "@/context/gameContext";
 import { animated as a, useSpring } from "@react-spring/three";
+import { sfx } from "@/lib/sfx";
 
 // Preload dice textures once at module load
 const DICE_TEXTURES = [
@@ -17,6 +18,12 @@ const DICE_TEXTURES = [
 
 // Drei helper: warm the cache so they're ready before the component mounts
 useTexture.preload(DICE_TEXTURES);
+
+/**
+ * Seconds the die spends in the air. Shared with the roll sound, which is
+ * stretched to match — change this and the clatter follows.
+ */
+const ROLL_DURATION = 1;
 
 const Dice = () => {
 	const gameContext = useContext(GameContext);
@@ -81,6 +88,9 @@ const Dice = () => {
 		if (isRotating || isWalking) return;
 
 		setIsRotating(true);
+		// The clatter is stretched to the tumble, so it finishes on the landing
+		// rather than half a second before it.
+		sfx.play("roll", ROLL_DURATION);
 		setRotationTime(0);
 		// Weighted random selection to reduce probability of faces 0, 2, 3, and 4
 		const weightedFaces = [1, 5, 1, 5, 1, 5, 0, 2, 3, 4]; // Left and Back weighted heavily
@@ -190,7 +200,9 @@ const Dice = () => {
 	useFrame((_state, delta) => {
 		if (!isRotating) return;
 
-		const t = rotationTime; // 0 → 1
+		// Normalised, so the arc and the spin still describe one throw whatever
+		// ROLL_DURATION is set to.
+		const t = rotationTime / ROLL_DURATION; // 0 → 1
 		const bounce = Math.sin(t * 3) * 0.4 + 0.9; // up-and-down
 
 		ref.current.position.lerpVectors(
@@ -205,7 +217,7 @@ const Dice = () => {
 		// advance the timer and decide if we’re done
 		setRotationTime((prev) => {
 			const next = prev + delta;
-			if (next >= 1) {
+			if (next >= ROLL_DURATION) {
 				// stop spinning
 				setIsRotating(false);
 
