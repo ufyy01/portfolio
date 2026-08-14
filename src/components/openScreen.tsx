@@ -626,26 +626,30 @@ const OpenScreen = ({
 									className="h-8 w-8"
 								/>
 							</span>
-							<span className="font-fraunces text-xl italic md:text-2xl">
+							{/* The button never wraps, so the loading label has to fit the
+							    narrowest phone with three digits beside it. At the size the
+							    idle label uses, "Setting up the board 100%" runs off a 375px
+							    screen — so the loading state drops a step on small widths,
+							    where it is transient anyway, and keeps full size from md up.
+							    The ellipsis goes with it: a live count says "in progress"
+							    better than three dots did. */}
+							<span
+								className={`font-fraunces italic md:text-2xl ${
+									isLoading ? "text-base" : "text-xl"
+								}`}>
 								{isLoading
-									? "Setting up the board..."
+									? "Setting up the board"
 									: "Click here to explore"}
 							</span>
+							{isLoading && (
+								// tabular-nums so the label beside it cannot twitch as the
+								// digits change width, and a shade lighter so the count reads
+								// as an aside rather than as part of the sentence.
+								<span className="font-fraunces text-sm italic tabular-nums text-[#fc045c]/75 md:text-xl">
+									{pct}%
+								</span>
+							)}
 						</Button>
-
-						{isLoading && (
-							<div className="intro-item mt-3">
-								<div className="h-1.5 w-full overflow-hidden rounded-full bg-white/25">
-									<div
-										className="h-full rounded-full bg-white transition-[width] duration-300 ease-out"
-										style={{ width: `${pct}%` }}
-									/>
-								</div>
-								<p className="mt-1.5 text-center text-xs text-white/85">
-									Loading the world... {pct}%
-								</p>
-							</div>
-						)}
 					</div>
 				</div>
 			</div>
